@@ -1,5 +1,5 @@
 import { $, esc, send, errorBox, fmtTime, VERSION } from "./ui.js";
-import { fmtDuration, hostMatches, isTightening, cleanDomain, hostOf, clockOn, setClock } from "../src/shared/core.js";
+import { fmtDuration, hostMatches, isTightening, cleanDomain, hostOf, clockOn, setClock, newer } from "../src/shared/core.js";
 import { REPO, ERROR_LIST_URL } from "../src/shared/errors.js";
 
 let state;
@@ -25,7 +25,9 @@ function renderBanners() {
   const box = $("#banners");
   box.replaceChildren();
   const u = state.update;
-  if (u && u.available) {
+  // The saved check may predate an update you've already installed, so
+  // compare against the version actually running.
+  if (u && u.available && newer(u.latest, VERSION)) {
     const el = document.createElement("div");
     el.className = "banner";
     el.innerHTML = `<b>TimeLock v${esc(u.latest)} is available</b> (you have v${esc(VERSION)}).

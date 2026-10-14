@@ -389,5 +389,9 @@ chrome.windows.onFocusChanged.addListener(() => tick("focus"));
 chrome.storage.onChanged.addListener((changes, area) => area === "local" && changes.settings && tick("settings"));
 
 chrome.runtime.onStartup.addListener(() => setTimeout(checkForUpdates, 5000));
-chrome.runtime.onInstalled.addListener(() => setTimeout(checkForUpdates, 5000));
+// After an install or reload, forget the old check result straight away.
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.remove("update");
+  setTimeout(checkForUpdates, 5000);
+});
 tick("startup");

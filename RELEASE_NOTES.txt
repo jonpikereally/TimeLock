@@ -1,1 +1,1 @@
-If TimeLock's files are updated without reloading the extension, you now get error TL-103 telling you to click ↻ in the extensions page, instead of the catch-all TL-999.
+Fixes the update banner offering an older version than the one you're running, left over from before a reload.
