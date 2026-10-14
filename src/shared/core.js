@@ -49,6 +49,17 @@ export function ruleFor(rules, host) {
   return rules.filter((r) => r.domains.some((d) => hostMatches(host, d)));
 }
 
+// Sites that show the ticking clock (Settings.clockSites), subdomains included.
+export function clockOn(clockSites, host) {
+  return (clockSites || []).some((d) => hostMatches(host, d));
+}
+
+export function setClock(clockSites, host, on) {
+  const list = (clockSites || []).filter((d) => on || !hostMatches(host, d));
+  if (on && !clockOn(list, host)) list.push(host);
+  return list;
+}
+
 export function ruleSeconds(rule, usage) {
   let s = 0;
   for (const [host, secs] of Object.entries(usage || {})) {
@@ -95,7 +106,7 @@ export function validateRule(r) {
   if (!domains.length || domains.includes(null)) return { error: "TL-501" };
   const limit = Number(r.limit);
   if (!Number.isFinite(limit) || limit < 0 || limit > 24 * 60 || Math.round(limit) !== limit) return { error: "TL-502" };
-  return { rule: { id: r.id, name: String(r.name || "").trim() || domains[0], domains, limit, clock: r.clock === true } };
+  return { rule: { id: r.id, name: String(r.name || "").trim() || domains[0], domains, limit } };
 }
 
 export function fmtDuration(secs) {

@@ -162,7 +162,11 @@
     const now = Date.now();
     const elapsed = counting() ? (now - syncedAt) / 1000 : 0;
     let secs, cls, tip;
-    if (st.unlockedUntil > now) {
+    if (st.mode === "up") {
+      secs = st.used + elapsed;
+      cls = "";
+      tip = `TimeLock: ${clock(secs)} spent on ${st.name} today.\nDrag to move · double-click to reset.`;
+    } else if (st.unlockedUntil > now) {
       secs = (st.unlockedUntil - now) / 1000;
       cls = "ok";
       tip = `TimeLock: unlocked for ${clock(secs)} more, then ${st.name} locks again.\nDrag to move · double-click to reset.`;
@@ -177,7 +181,7 @@
     box.title = tip;
     box.querySelector(".hand").style.transform = `rotate(${(Math.floor(now / 1000) % 60) * 6}deg)`;
     // Out of time: ask the background now, which locks the site straight away.
-    if (secs <= 0 && now - syncedAt > 1500) sync();
+    if (st.mode !== "up" && secs <= 0 && now - syncedAt > 1500) sync();
   }
 
   let syncing = false;

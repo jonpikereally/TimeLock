@@ -1,5 +1,5 @@
 import { $, esc, send, errorBox, fmtTime, VERSION } from "./ui.js";
-import { fmtDuration, hostMatches, isTightening, cleanDomain } from "../src/shared/core.js";
+import { fmtDuration, hostMatches, isTightening, cleanDomain, hostOf, clockOn, setClock } from "../src/shared/core.js";
 import { REPO, ERROR_LIST_URL } from "../src/shared/errors.js";
 
 let state;
@@ -7,7 +7,10 @@ let draft; // settings being edited in the Settings view
 
 async function refresh() {
   try {
-    state = await send("state");
+    // Ask about this window's own tab: while the popup is open, the window
+    // may not count as "focused" (Brave), so the background can't tell.
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => []);
+    state = await send("state", { host: tab ? hostOf(tab.url) : null });
   } catch (e) {
     $("#banners").replaceChildren(errorBox(e));
     return;
@@ -59,6 +62,31 @@ function ruleCard(r, st) {
   return el;
 }
 
+// The "Show timer" toggle on each site. Takes effect right away, no Save needed.
+function clockButton(host) {
+  const b = document.createElement("button");
+  const draw = () => {
+    const on = clockOn(state.settings.clockSites, host);
+    b.className = `btn small clock-btn ${on ? "on" : ""}`;
+    b.textContent = on ? "⏱ Timer on" : "Show timer";
+    b.title = on ? `Hide the ticking clock on ${host}` : `Show a ticking clock in the corner of ${host}`;
+  };
+  b.onclick = async () => {
+    const on = !clockOn(state.settings.clockSites, host);
+    try {
+      state.settings.clockSites = await send("setClock", { host, on });
+      // Redraw them all: turning on reddit.com also covers old.reddit.com.
+      document.querySelectorAll(".clock-btn").forEach((x) => x.redraw());
+    } catch (e) {
+      $("#banners").prepend(errorBox(e, { compact: true }));
+    }
+  };
+  b.dataset.clockHost = host;
+  b.redraw = draw;
+  draw();
+  return b;
+}
+
 function renderHome() {
   const { settings, statuses, usage, host } = state;
   const byId = Object.fromEntries(statuses.map((s) => [s.id, s]));
@@ -71,19 +99,16 @@ function renderHome() {
     const el = document.createElement("div");
     el.className = "card";
     el.innerHTML = `<div class="row"><span class="grow ellipsis"><b>${esc(host)}</b></span><span class="muted">${fmtDuration(usage[host] || 0)} today</span></div>`;
+    $(".row", el).append(clockButton(host));
     if (!covered.length) {
       const add = document.createElement("div");
       add.className = "row";
       add.style.marginTop = "8px";
       add.innerHTML = `<span class="grow small">Limit this site to</span><input class="min" type="number" min="0" max="1440" value="30"><span class="small">min/day</span><button class="btn small primary">Add</button>`;
-      const clockOpt = document.createElement("label");
-      clockOpt.className = "row small";
-      clockOpt.style.marginTop = "6px";
-      clockOpt.innerHTML = `<input type="checkbox" checked> Show a ticking clock on this site`;
       const err = document.createElement("div");
       $("button", add).onclick = async () => {
         err.replaceChildren();
-        const rule = { name: host, domains: [host], limit: Number($("input", add).value), clock: $("input", clockOpt).checked };
+        const rule = { name: host, domains: [host], limit: Number($("input", add).value) };
         try {
           await send("saveSettings", { settings: { ...settings, rules: [...settings.rules, rule] } });
           refresh();
@@ -92,7 +117,7 @@ function renderHome() {
           if (e.code === "TL-405") openSettings();
         }
       };
-      el.append(add, clockOpt, err);
+      el.append(add, err);
     }
     now.append(el);
   }
@@ -105,9 +130,15 @@ function renderHome() {
   const rows = Object.entries(usage).sort((a, b) => b[1] - a[1]);
   const total = rows.reduce((t, [, s]) => t + s, 0);
   $("#total").textContent = fmtDuration(total);
-  $("#sites").innerHTML = rows.length
-    ? rows.slice(0, 15).map(([h, s]) => `<li><span class="grow ellipsis">${esc(h)}</span><span class="t">${fmtDuration(s)}</span></li>`).join("")
-    : `<li class="empty">Nothing tracked yet today.</li>`;
+  const list = $("#sites");
+  list.replaceChildren();
+  if (!rows.length) list.innerHTML = `<li class="empty">Nothing tracked yet today.</li>`;
+  for (const [h, s] of rows.slice(0, 15)) {
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="grow ellipsis">${esc(h)}</span><span class="t">${fmtDuration(s)}</span>`;
+    li.append(clockButton(h));
+    list.append(li);
+  }
 }
 
 // ---------- settings ----------
@@ -178,11 +209,13 @@ function renderRuleEditor() {
       <button class="btn icon del" title="Remove this limit">🗑</button>
       <input class="domains" placeholder="youtube.com, reddit.com" value="${esc(r.domains.join(", "))}">
       <span class="small muted">min/day</span>
-      <label class="row small clock-opt"><input type="checkbox" class="clock" ${r.clock ? "checked" : ""}> Show ticking clock on these sites</label>`;
+      <label class="row small clock-opt"><input type="checkbox" class="clock" ${r.domains.length && r.domains.every((d) => clockOn(draft.clockSites, d)) ? "checked" : ""}> Show ticking clock on these sites</label>`;
     $(".name", el).oninput = (e) => { r.name = e.target.value; };
     $(".limit", el).oninput = (e) => { r.limit = e.target.value === "" ? NaN : Number(e.target.value); updateSaveState(); };
     $(".domains", el).oninput = (e) => { r.domains = e.target.value.split(/[,\s]+/).filter(Boolean); updateSaveState(); };
-    $(".clock", el).onchange = (e) => { r.clock = e.target.checked; };
+    $(".clock", el).onchange = (e) => {
+      for (const d of r.domains.map(cleanDomain).filter(Boolean)) draft.clockSites = setClock(draft.clockSites, d, e.target.checked);
+    };
     $(".del", el).onclick = () => { draft.rules.splice(i, 1); renderRuleEditor(); updateSaveState(); };
     box.append(el);
   });

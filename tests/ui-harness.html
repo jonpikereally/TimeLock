@@ -10,9 +10,9 @@
 <script type="module">
 import * as core from "/src/shared/core.js";
 const now = Date.now();
-const settings = { resetHour: 0, warnings: true, updateSource: "", rules: [
+const settings = { resetHour: 0, warnings: true, updateSource: "", clockSites: ["youtube.com", "github.com"], rules: [
   { id: "a", name: "Social", domains: ["reddit.com", "x.com"], limit: 30 },
-  { id: "b", name: "youtube.com", domains: ["youtube.com"], limit: 60, clock: true },
+  { id: "b", name: "youtube.com", domains: ["youtube.com"], limit: 60 },
   { id: "c", name: "News", domains: ["cnn.com"], limit: 20 },
 ] };
 const usage = { "youtube.com": 2840, "reddit.com": 1500, "old.reddit.com": 320, "github.com": 4100, "cnn.com": 600, "mail.google.com": 900 };
@@ -32,10 +32,11 @@ const handlers = {
     if (!core.isTightening(settings, s) && password !== PW) return fail("TL-401");
     Object.assign(settings, s, { rules: s.rules.map((r) => ({ ...core.validateRule(r).rule, id: r.id || Math.random().toString(36) })) });
   },
+  setClock: ({ host, on }) => (settings.clockSites = core.setClock(settings.clockSites, host, on)),
   checkUpdates: () => ({ checkedAt: now, current: "1.0.0", latest: "1.0.0", available: false }),
   dismissErrors: () => {}, relockNow: ({ ruleId }) => { delete unlocks[ruleId]; },
 };
-const chromeMock = { runtime: { getManifest: () => ({ version: "1.0.0" }), getURL: (p) => "/" + p,
+const chromeMock = { tabs: { query: async () => [{ url: "https://www.youtube.com/watch?v=1" }] }, runtime: { getManifest: () => ({ version: "1.0.0" }), getURL: (p) => "/" + p,
   sendMessage: async (m) => { const r = await handlers[m.type](m); return r && r.ok === false ? r : { ok: true, result: r }; } } };
 async function load(id, page, hash = "") {
   const f = document.getElementById(id);

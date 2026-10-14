@@ -7,7 +7,7 @@ const FEED = `https://raw.githubusercontent.com/${REPO}/main/updates/latest.json
 const BLOCKED = chrome.runtime.getURL("app/blocked.html");
 const MAX_GAP = 90; // seconds; a longer gap between ticks means the computer slept
 const KEEP_DAYS = 35;
-const DEFAULTS = { rules: [], resetHour: 0, warnings: true, updateSource: "" };
+const DEFAULTS = { rules: [], resetHour: 0, warnings: true, updateSource: "", clockSites: [] };
 
 // Every state change goes through one queue, so two events firing together
 // can't count the same seconds twice.
@@ -24,7 +24,10 @@ async function load(keys) {
 
 async function getSettings() {
   const { settings } = await load("settings");
-  return { ...DEFAULTS, ...settings };
+  const s = { ...DEFAULTS, ...settings };
+  // v1.2.0 kept the clock as a per-limit flag; fold those into clockSites.
+  for (const r of s.rules) if (r.clock) for (const d of r.domains) s.clockSites = core.setClock(s.clockSites, d, true);
+  return s;
 }
 
 // ---------- time tracking ----------
@@ -205,17 +208,34 @@ const handlers = {
     const host = core.hostOf(sender.tab && sender.tab.url);
     await serial(flush);
     const s = await getSettings();
-    if (!host) return null;
+    if (!host || !core.clockOn(s.clockSites, host)) return null;
     const now = Date.now();
     const day = core.dayKey(now, s.resetHour);
     const { [`usage:${day}`]: usage = {}, unlocks = {} } = await load([`usage:${day}`, "unlocks"]);
-    // Only limits with "Show ticking clock" ticked get the clock.
-    const mine = core.ruleFor(s.rules.filter((r) => r.clock), host)
+    const mine = core.ruleFor(s.rules, host)
       .map((r) => [r, core.ruleStatus(r, usage, unlocks, now, s.resetHour)])
       .sort((a, b) => a[1].left - b[1].left);
-    if (!mine.length) return null;
+    // No limit on this site: the clock counts up the time spent today instead.
+    if (!mine.length) {
+      const domain = s.clockSites.find((d) => core.hostMatches(host, d));
+      return { mode: "up", name: domain, used: core.ruleSeconds({ domains: [domain] }, usage) };
+    }
     const [r, st] = mine[0];
     return { name: r.name, domains: r.domains, left: st.left, used: st.used, limit: st.limit, unlockedUntil: st.unlockedUntil };
+  },
+
+  // Show/hide the clock on one site. Never needs the password.
+  async setClock({ host, on }) {
+    const domain = core.cleanDomain(host);
+    if (!domain) throw coded("TL-501", String(host));
+    const s = await getSettings();
+    const clockSites = core.setClock(s.clockSites, domain, !!on);
+    try {
+      await chrome.storage.local.set({ settings: { ...s, clockSites, rules: s.rules.map(({ clock, ...r }) => r) } });
+    } catch (e) {
+      throw coded("TL-503", e.message);
+    }
+    return clockSites;
   },
 
   async logError({ code, details }) {
@@ -268,6 +288,7 @@ const handlers = {
       resetHour: Math.min(23, Math.max(0, Number(settings.resetHour) || 0)),
       warnings: settings.warnings !== false,
       updateSource: String(settings.updateSource || "").trim(),
+      clockSites: [...new Set((settings.clockSites || []).map(core.cleanDomain).filter(Boolean))],
     };
     if (rules.length && !pw) throw coded("TL-405");
     if (!core.isTightening(old, next)) await verify(password);

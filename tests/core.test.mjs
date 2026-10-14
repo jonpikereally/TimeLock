@@ -54,8 +54,12 @@ assert.equal(c.validateRule({ domains: ["a.com"], limit: -1 }).error, "TL-502");
 assert.equal(c.validateRule({ domains: ["a.com"], limit: 2.5 }).error, "TL-502");
 assert.equal(c.validateRule({ domains: ["a.com"], limit: NaN }).error, "TL-502");
 
-assert.equal(c.validateRule({ domains: ["a.com"], limit: 5 }).rule.clock, false, "clock is opt-in");
-assert.equal(c.validateRule({ domains: ["a.com"], limit: 5, clock: true }).rule.clock, true);
+// clock sites
+assert.ok(c.clockOn(["youtube.com"], "m.youtube.com"));
+assert.ok(!c.clockOn([], "youtube.com"));
+assert.deepEqual(c.setClock([], "x.com", true), ["x.com"]);
+assert.deepEqual(c.setClock(["x.com"], "x.com", true), ["x.com"], "no duplicates");
+assert.deepEqual(c.setClock(["youtube.com", "x.com"], "m.youtube.com", false), ["x.com"], "turning off removes the covering entry");
 
 // misc
 assert.equal(c.fmtDuration(42), "42s");

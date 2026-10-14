@@ -44,7 +44,10 @@ label.field { display: block; margin: 8px 0 3px; font-size: 12px; color: var(--m
 .sites { list-style: none; margin: 0; padding: 0; }
 .sites li { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
 .sites li:last-child { border-bottom: 0; }
+.sites li { align-items: center; }
 .sites .t { font-variant-numeric: tabular-nums; color: var(--muted); }
+.clock-btn { font-size: 11px; padding: 1px 7px; white-space: nowrap; color: var(--muted); min-width: 76px; }
+.clock-btn.on { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 .banner { border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; border: 1px solid var(--line); background: var(--info-bg); }
 .banner.error { background: var(--err-bg); border-color: var(--err-line); }
 .err-head { display: flex; justify-content: space-between; font-weight: 600; }
