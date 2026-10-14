@@ -6,6 +6,12 @@
   if (window.top !== window || window.__timelockClock) return;
   window.__timelockClock = true;
 
+  // The background asks whether this page really has focus: on macOS the
+  // browser window can report "focused" while another app is in front.
+  chrome.runtime.onMessage.addListener((msg, sender, reply) => {
+    if (msg && msg.type === "hasFocus") reply(document.visibilityState === "visible" && document.hasFocus());
+  });
+
   const SYNC_MS = 15000;
   let st = null; // { left, used, limit, unlockedUntil, name, domains } or { mode: "up", used, name }
   let syncedAt = 0;

@@ -40,7 +40,7 @@ const handlers = {
   checkUpdates: () => ({ checkedAt: now, current: "1.0.0", latest: "1.0.0", available: false }),
   dismissErrors: () => {}, relockNow: ({ ruleId }) => { delete unlocks[ruleId]; },
 };
-const chromeMock = { tabs: { query: async () => [{ url: "https://www.youtube.com/watch?v=1" }] }, runtime: { getManifest: () => ({ version: "1.0.0" }), getURL: (p) => "/" + p,
+const chromeMock = { tabs: { query: async () => [{ url: "https://" + (q.get("host") || "www.youtube.com") + "/" }] }, runtime: { getManifest: () => ({ version: "1.0.0" }), getURL: (p) => "/" + p,
   sendMessage: async (m) => { const r = await handlers[m.type](m); return r && r.ok === false ? r : { ok: true, result: r }; } } };
 async function load(id, page, hash = "") {
   const f = document.getElementById(id);

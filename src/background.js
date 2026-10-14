@@ -40,6 +40,12 @@ async function frontHost() {
   if (!win || !win.focused) return null;
   const [tab] = await chrome.tabs.query({ active: true, windowId: win.id });
   if (!tab) return null;
+  // On macOS the window can stay "focused" after you switch to another app,
+  // so ask the page too: document.hasFocus() is false whenever the browser
+  // isn't the frontmost app. Pages without our script (new tab, extension
+  // pages) fall back to the window check above.
+  const pageFocused = await chrome.tabs.sendMessage(tab.id, { type: "hasFocus" }).catch(() => null);
+  if (pageFocused === false) return null;
   const { idle, [`media:${tab.id}`]: video } = await chrome.storage.session.get(["idle", `media:${tab.id}`]);
   // After a minute with no mouse or keyboard input, time stops counting
   // unless the tab is playing sound or a video (muted videos included).
@@ -433,6 +439,53 @@ async function checkForUpdates(manual = false) {
   return state;
 }
 
+// ---------- one-time restore ----------
+// A restore.json in the extension folder (never in the repo) is merged into
+// storage once: used when data has to be carried over from an older copy of
+// the extension, e.g. the one before the ID was pinned in v2.0.0.
+
+async function restoreFromFile() {
+  let file;
+  try {
+    const res = await fetch(chrome.runtime.getURL("restore.json"), { cache: "no-store" });
+    if (!res.ok) return;
+    file = await res.json();
+  } catch {
+    return; // no file: the normal case
+  }
+  try {
+    if (file.app !== "TimeLock" || file.kind !== "restore" || !file.data) throw new Error("not a TimeLock restore file");
+    const { restoredFrom } = await chrome.storage.local.get("restoredFrom");
+    if (restoredFrom === file.createdAt) return;
+    const cur = await chrome.storage.local.get(null);
+    const out = {};
+    const d = file.data;
+    if (d.pw && !cur.pw) out.pw = d.pw;
+    if (d.settings) {
+      const s = { ...DEFAULTS, ...cur.settings };
+      const old = { ...DEFAULTS, ...d.settings };
+      out.settings = {
+        ...old,
+        ...cur.settings,
+        rules: s.rules.length ? s.rules : old.rules,
+        clockSites: [...new Set([...(old.clockSites || []), ...(s.clockSites || [])])],
+      };
+    }
+    for (const [k, v] of Object.entries(d)) {
+      if (!/^(usage|apps):\d{4}-\d\d-\d\d$/.test(k)) continue;
+      // The two copies counted different stretches of time, so add them up.
+      const merged = { ...(cur[k] || {}) };
+      for (const [host, secs] of Object.entries(v)) merged[host] = (merged[host] || 0) + secs;
+      out[k] = merged;
+    }
+    out.restoredFrom = file.createdAt;
+    await chrome.storage.local.set(out);
+    console.info("[TimeLock] restored", Object.keys(out));
+  } catch (e) {
+    await logError("TL-205", `restore.json: ${e.message}`);
+  }
+}
+
 // ---------- wiring ----------
 
 chrome.alarms.create("tick", { periodInMinutes: 0.5 });
@@ -462,4 +515,4 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.remove("update");
   setTimeout(checkForUpdates, 5000);
 });
-tick("startup");
+restoreFromFile().finally(() => tick("startup"));

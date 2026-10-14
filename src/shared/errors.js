@@ -17,6 +17,7 @@ export const ERRORS = {
   "TL-202": ["Couldn't read your saved time or settings.", "Restart Chrome. If it persists, copy the details."],
   "TL-203": ["The countdown clock couldn't load on a page.", "Reload the page. Time is still tracked and limits still apply."],
   "TL-204": ["Couldn't remember where you moved the clock.", "Drag it again. If it keeps forgetting, copy the details."],
+  "TL-205": ["Couldn't restore data from an older copy of TimeLock.", "Copy the details and ask for help; your current data wasn't changed."],
   "TL-301": ["Couldn't turn on blocking for a locked site.", "Restart Chrome. Until this is fixed, locked sites may still open."],
   "TL-302": ["Couldn't send an open tab to the lock screen.", "Close the tab yourself; new visits are still blocked."],
   "TL-401": ["That password isn't right.", "Try again. After 3 wrong tries you'll have to wait before the next one."],

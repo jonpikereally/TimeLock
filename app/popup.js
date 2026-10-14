@@ -110,11 +110,19 @@ function renderHome() {
       const add = document.createElement("div");
       add.className = "row";
       add.style.marginTop = "8px";
-      add.innerHTML = `<span class="grow small">Limit this site to</span><input class="min" type="number" min="0" max="1440" value="30"><span class="small">min/day</span><button class="btn small primary">Add</button>`;
+      add.innerHTML = `<span class="grow small">Limit this site to</span><input class="min" type="number" min="0" max="1440" placeholder="30"><span class="small">min/day</span><button class="btn small" disabled>Add</button>`;
+      // Grey until a number of minutes is typed, then blue.
+      const minutes = $("input", add), addBtn = $("button", add);
+      minutes.oninput = () => {
+        const ok = minutes.value !== "" && Number(minutes.value) >= 0;
+        addBtn.disabled = !ok;
+        addBtn.classList.toggle("primary", ok);
+      };
       const err = document.createElement("div");
       $("button", add).onclick = async () => {
         err.replaceChildren();
-        const rule = { name: host, domains: [host], limit: Number($("input", add).value) };
+        if (minutes.value === "") return;
+        const rule = { name: host, domains: [host], limit: Number(minutes.value) };
         try {
           await send("saveSettings", { settings: { ...settings, rules: [...settings.rules, rule] } });
           refresh();
