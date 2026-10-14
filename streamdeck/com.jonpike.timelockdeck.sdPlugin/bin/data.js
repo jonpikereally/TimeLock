@@ -138,6 +138,30 @@ function clock(secs) {
   return h ? `${h}h ${pad(m)}` : `${m}:${pad(s)}`;
 }
 
+/// The key's chosen time format. "auto" keeps each key's natural style:
+/// `clock` for the big number on rings, `duration` everywhere else.
+const FORMATS = ["auto", "hm", "hms", "min", "dec"];
+function format(secs, fmt, auto = "duration") {
+  secs = Math.max(0, Math.floor(secs));
+  switch (fmt) {
+    case "hm": {
+      const m = Math.floor(secs / 60);
+      if (m < 60) return `${m}m`;
+      return `${Math.floor(m / 60)}h ${pad(m % 60)}m`;
+    }
+    case "hms": {
+      const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), s = secs % 60;
+      return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+    }
+    case "min":
+      return `${Math.floor(secs / 60)} min`;
+    case "dec":
+      return `${(secs / 3600).toFixed(1)} h`;
+    default:
+      return auto === "clock" ? clock(secs) : duration(secs);
+  }
+}
+
 /// Time for one app or site today (sites include their subdomains).
 function timeFor(snap, kind, name) {
   if (!name) return 0;
@@ -147,4 +171,4 @@ function timeFor(snap, kind, name) {
   return snap.apps[name] || 0;
 }
 
-module.exports = { DIR, ERRORS, ERROR_LIST_URL, ERROR_LIST_RAW, describe, snapshot, limitStatus, hostMatches, duration, clock, sum, timeFor, localDay };
+module.exports = { FORMATS, format, DIR, ERRORS, ERROR_LIST_URL, ERROR_LIST_RAW, describe, snapshot, limitStatus, hostMatches, duration, clock, sum, timeFor, localDay };

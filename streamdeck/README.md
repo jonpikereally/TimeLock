@@ -10,6 +10,8 @@ Stream Deck plugin for TimeLock. Adds a **TimeLock** category:
 | **Screen Time Today** | Total time on your Mac or in the browser today. Press to switch. |
 | **Now Counting** | What TimeLock for Mac is counting right now, media playing in the background (♪), or Away / Screen locked. |
 
+Every key and the dial have a **Time format** setting: Automatic, `1h 05m`, `1:05:23`, `65 min` or `1.1 h`.
+
 It's read-only: it never changes limits or time.
 
 ## How it works

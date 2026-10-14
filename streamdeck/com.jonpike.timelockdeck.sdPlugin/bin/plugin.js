@@ -47,6 +47,9 @@ const short = (action) => action.split(".").pop();
 
 // --- Rendering -------------------------------------------------------------------
 
+/// Formats a time the way this key's "Time format" setting asks.
+const t = (settings, auto, secs) => data.format(secs, settings && settings.format, auto);
+
 function renderAll() {
   for (const [context, entry] of contexts) render(context, entry);
 }
@@ -85,7 +88,7 @@ function render(context, entry) {
     case "dial": return renderDial(context, entry, settings);
     case "time": return renderTime(context, entry, settings);
     case "today": return renderToday(context, entry, settings);
-    case "now": return renderNow(context, entry);
+    case "now": return renderNow(context, entry, settings);
   }
 }
 
@@ -113,15 +116,15 @@ function renderLimitKey(context, entry, settings) {
   const color = draw.limitColor(st);
   const used = settings.show === "used";
   if (st.unlocked) {
-    return setImage(context, entry, draw.ring({ pct: st.pct, color, top: "unlocked", big: data.clock((st.unlockedUntil - snap.now) / 1000), bottom: st.name }));
+    return setImage(context, entry, draw.ring({ pct: st.pct, color, top: "unlocked", big: t(settings, "clock", (st.unlockedUntil - snap.now) / 1000), bottom: st.name }));
   }
   if (st.locked) {
-    return setImage(context, entry, draw.ring({ pct: 1, color, lock: true, big: st.limit === 0 ? "all day" : data.duration(st.used), bottom: st.name }));
+    return setImage(context, entry, draw.ring({ pct: 1, color, lock: true, big: st.limit === 0 ? "all day" : t(settings, "duration", st.used), bottom: st.name }));
   }
   setImage(context, entry, draw.ring({
     pct: st.pct, color,
     top: used ? "used" : "left",
-    big: data.clock(used ? st.used : st.left),
+    big: t(settings, "clock", used ? st.used : st.left),
     bottom: st.name,
   }));
 }
@@ -141,9 +144,9 @@ function renderDial(context, entry, settings) {
   if (!st) return showProblem(context, entry, "TL-904", missing, "limit gone");
   const color = draw.limitColor(st);
   let value;
-  if (st.unlocked) value = `unlocked ${data.clock((st.unlockedUntil - snap.now) / 1000)}`;
+  if (st.unlocked) value = `unlocked ${t(settings, "clock", (st.unlockedUntil - snap.now) / 1000)}`;
   else if (st.locked) value = "🔒 locked";
-  else value = settings.show === "used" ? `${data.duration(st.used)} used` : `${data.duration(st.left)} left`;
+  else value = settings.show === "used" ? `${t(settings, "duration", st.used)} used` : `${t(settings, "duration", st.left)} left`;
   const n = snap.limits.length;
   const i = snap.limits.indexOf(st) + 1;
   setFeedback(context, entry, {
@@ -162,7 +165,7 @@ function renderTime(context, entry, settings) {
   const live = kind === "app" && snap.front === settings.name;
   setImage(context, entry, draw.text({
     top: settings.name,
-    big: data.duration(data.timeFor(snap, kind, settings.name)),
+    big: t(settings, "duration", data.timeFor(snap, kind, settings.name)),
     bottom: live ? "● now" : "today",
     color: live ? draw.COLORS.ok : draw.COLORS.text,
   }));
@@ -175,19 +178,19 @@ function renderToday(context, entry, settings) {
   const mac = data.sum(snap.apps), site = data.sum(snap.sites);
   setImage(context, entry, draw.text({
     top: web ? "In the browser" : "On your Mac",
-    big: data.duration(web ? site : mac),
-    sub: web ? (snap.macRunning ? `Mac ${data.duration(mac)}` : "") : (snap.browserConnected ? `web ${data.duration(site)}` : ""),
+    big: t(settings, "duration", web ? site : mac),
+    sub: web ? (snap.macRunning ? `Mac ${t(settings, "duration", mac)}` : "") : (snap.browserConnected ? `web ${t(settings, "duration", site)}` : ""),
     bottom: "today",
   }));
 }
 
-function renderNow(context, entry) {
+function renderNow(context, entry, settings) {
   const b = blocker({ mac: true });
   if (b) return showProblem(context, entry, ...b);
   const bg = snap.background;
   const playing = bg.length ? `♪ ${bg.join(", ")}` : "";
   if (snap.state === "counting" && snap.front) {
-    return setImage(context, entry, draw.text({ top: snap.front, big: data.duration(snap.apps[snap.front] || 0), sub: playing, bottom: "● counting", color: draw.COLORS.ok }));
+    return setImage(context, entry, draw.text({ top: snap.front, big: t(settings, "duration", snap.apps[snap.front] || 0), sub: playing, bottom: "● counting", color: draw.COLORS.ok }));
   }
   const label = { away: "Away", screenLocked: "Screen locked", idle: "Paused" }[snap.state] || "Paused";
   setImage(context, entry, draw.text({ top: "TimeLock", big: label, sub: playing, bottom: playing ? "counting media" : "not counting", color: draw.COLORS.muted }));

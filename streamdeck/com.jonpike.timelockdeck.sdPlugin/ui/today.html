@@ -1,6 +1,9 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body>
 <div id="problem" class="problem" style="display:none"></div>
 <div class="row"><label>Show</label><select name="show" data-default="mac"><option value="mac">Time on your Mac</option><option value="web">Time in the browser</option></select></div>
+<div class="row"><label>Time format</label><select name="format" data-default="auto">
+  <option value="auto">Automatic</option><option value="hm">1h 05m</option><option value="hms">1:05:23</option>
+  <option value="min">65 min</option><option value="dec">1.1 h</option></select></div>
 <p class="hint">Total screen time today. Press the key to switch between Mac and browser. Mac time includes the browser app itself; browser time is split by website.</p>
 <p class="status" id="status"></p>
 <script src="pi.js"></script></body></html>

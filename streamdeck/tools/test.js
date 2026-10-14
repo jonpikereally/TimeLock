@@ -53,6 +53,15 @@ fs.writeFileSync(path.join(dir, "browser.json"), JSON.stringify({
   assert.equal(data.duration(3725), "1h 02m");
   assert.equal(data.clock(754), "12:34");
   assert.equal(data.clock(3725), "1h 02");
+  // Time format setting
+  assert.equal(data.format(3725, "hm"), "1h 02m");
+  assert.equal(data.format(754, "hm"), "12m");
+  assert.equal(data.format(3725, "hms"), "1:02:05");
+  assert.equal(data.format(754, "hms"), "12:34");
+  assert.equal(data.format(3725, "min"), "62 min");
+  assert.equal(data.format(3960, "dec"), "1.1 h");
+  assert.equal(data.format(754, "auto", "clock"), "12:34");
+  assert.equal(data.format(754, undefined), "12m");
 
   // Mac app quit: status older than 30 s → not running, totals from the day file.
   const stale = data.snapshot(now + 60000, dir);
@@ -85,6 +94,8 @@ const keys = [
   ["limit", { limit: "Games" }], ["limit", { limit: "Gone" }], ["dial", { limit: "YouTube" }],
   ["time", { kind: "app", name: "Visual Studio Code" }], ["time", { kind: "site", name: "reddit.com" }],
   ["today", { show: "mac" }], ["today", { show: "web" }], ["now", {}],
+  ["time", { kind: "app", name: "Visual Studio Code", format: "hms" }], ["limit", { limit: "YouTube", format: "min" }],
+  ["dial", { limit: "YouTube", format: "dec" }],
 ];
 
 server.on("connection", (sock) => {
@@ -122,6 +133,9 @@ setTimeout(() => {
     assert.equal(dialSettings.settings.limit, "News", "dial turned from YouTube to the next limit");
     const fb = byCtx("ctx5").filter((v) => v.title).at(-1);
     assert.ok(fb.title.startsWith("News") && fb.indicator.bar_fill_c, "dial feedback has title + coloured bar");
+    assert.ok(decodeURIComponent(byCtx("ctx11")[0]).includes(">1:30:00<"), "Time Today in 1:05:23 format");
+    assert.ok(decodeURIComponent(byCtx("ctx12")[0]).includes(">5 min<"), "Limit ring in minutes format");
+    assert.equal(byCtx("ctx13").filter((v) => v.title).at(-1).value, "0.1 h left", "dial in decimal hours");
     console.log("PASS fake Stream Deck run");
   }
   const html = `<!doctype html><meta charset="utf-8"><title>TimeLock Deck keys</title><body style="background:#000;color:#ccc;font:13px sans-serif">
