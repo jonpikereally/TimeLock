@@ -48,8 +48,9 @@ function update(p) {
       sel.innerHTML = "";
       const add = (v, t) => { const o = document.createElement("option"); o.value = v; o.textContent = t; sel.appendChild(o); };
       add("", sel.dataset.list === "limits" ? "First limit" : "Choose…");
+      if (sel.dataset.cycle) add("*", sel.dataset.cycle);
       for (const i of items) add(i, i);
-      if (cur && !items.includes(cur)) add(cur, `${cur} (no time today)`);
+      if (cur && cur !== "*" && !items.includes(cur)) add(cur, `${cur} (no time today)`);
       sel.value = cur;
     }
   }

@@ -6,7 +6,7 @@ Stream Deck plugin for TimeLock. Adds a **TimeLock** category:
 |---|---|
 | **Limit** (key) | A ring for one daily limit: time left in the middle, orange in the last 5 minutes, red with a lock when locked, green with a countdown while unlocked. Press to switch between time left and time used. |
 | **Limits Dial** (Stream Deck +) | The same on the touch strip with a coloured bar. Turn to step through your limits, press or tap to switch left / used. |
-| **Time Today** | Today's time in one Mac app or on one website. Green while that app is the one being counted. |
+| **Time Today** | Today's time in one Mac app or on one website. Green while that app is the one being counted. Or pick **All apps / websites today (cycle)** to step through everything used today, most time first (2–20 s each; press to skip). |
 | **Screen Time Today** | Total time on your Mac or in the browser today. Press to switch. |
 | **Now Counting** | What TimeLock for Mac is counting right now, media playing in the background (♪), or Away / Screen locked. |
 

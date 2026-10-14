@@ -96,6 +96,8 @@ const keys = [
   ["today", { show: "mac" }], ["today", { show: "web" }], ["now", {}],
   ["time", { kind: "app", name: "Visual Studio Code", format: "hms" }], ["limit", { limit: "YouTube", format: "min" }],
   ["dial", { limit: "YouTube", format: "dec" }],
+  ["time", { kind: "app", name: "*", cycleSecs: "20" }],
+  ["time", { kind: "site", name: "*", cycleSecs: "2" }],
 ];
 
 server.on("connection", (sock) => {
@@ -104,6 +106,7 @@ server.on("connection", (sock) => {
       sock.send(JSON.stringify({ event: "willAppear", action: `com.jonpike.timelockdeck.${a}`, context: `ctx${i}`, payload: { settings } })));
     // Press the first key (left → used) and turn the dial.
     setTimeout(() => sock.send(JSON.stringify({ event: "keyDown", action: "com.jonpike.timelockdeck.limit", context: "ctx0", payload: {} })), 300);
+    setTimeout(() => sock.send(JSON.stringify({ event: "keyDown", action: "com.jonpike.timelockdeck.time", context: "ctx14", payload: {} })), 500);
     setTimeout(() => sock.send(JSON.stringify({ event: "dialRotate", action: "com.jonpike.timelockdeck.dial", context: "ctx5", payload: { ticks: 1 } })), 400);
   });
   sock.on("message", (raw) => {
@@ -136,6 +139,12 @@ setTimeout(() => {
     assert.ok(decodeURIComponent(byCtx("ctx11")[0]).includes(">1:30:00<"), "Time Today in 1:05:23 format");
     assert.ok(decodeURIComponent(byCtx("ctx12")[0]).includes(">5 min<"), "Limit ring in minutes format");
     assert.equal(byCtx("ctx13").filter((v) => v.title).at(-1).value, "0.1 h left", "dial in decimal hours");
+    const cyc = byCtx("ctx14").filter((v) => typeof v === "string").map(decodeURIComponent);
+    assert.ok(cyc[0].includes(">Visual Studio Code<") && cyc[0].includes(">1/4 ● now<"), "cycle starts on the app with the most time");
+    assert.ok(cyc.at(-1).includes(">Brave Browser<") && cyc.at(-1).includes(">2/4<"), "pressing skips to the next app");
+    const sites = byCtx("ctx15").filter((v) => typeof v === "string").map(decodeURIComponent);
+    assert.ok(sites[0].includes(">youtube.com<") && sites[0].includes(">1/5<"), "site cycle starts on the top site");
+    assert.ok(sites.some((x) => x.includes(">github.com<") && x.includes(">2/5<")), "site cycle advanced on its own after 2 s");
     console.log("PASS fake Stream Deck run");
   }
   const html = `<!doctype html><meta charset="utf-8"><title>TimeLock Deck keys</title><body style="background:#000;color:#ccc;font:13px sans-serif">
@@ -150,4 +159,4 @@ ${fb ? `<div style="width:200px;height:100px;background:#111;border-radius:8px;p
   const out = path.join(process.env.TMPDIR || os.tmpdir(), "timelockdeck-keys.html");
   fs.writeFileSync(out, html);
   console.log("Key images:", out);
-}, 1500);
+}, 3500);

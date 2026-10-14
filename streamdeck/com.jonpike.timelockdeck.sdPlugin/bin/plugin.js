@@ -162,11 +162,40 @@ function renderTime(context, entry, settings) {
   const b = blocker(kind === "site" ? { browser: true } : { mac: true });
   if (b) return showProblem(context, entry, ...b);
   if (!settings.name) return setImage(context, entry, draw.text({ top: kind === "site" ? "Website" : "App", big: "—", bottom: "pick one" }));
+  if (settings.name === CYCLE) return renderCycle(context, entry, settings, kind);
   const live = kind === "app" && snap.front === settings.name;
   setImage(context, entry, draw.text({
     top: settings.name,
     big: t(settings, "duration", data.timeFor(snap, kind, settings.name)),
     bottom: live ? "● now" : "today",
+    color: live ? draw.COLORS.ok : draw.COLORS.text,
+  }));
+}
+
+// "All apps today (cycle)": steps through everything used today, most time
+// first, one every `cycleSecs` seconds. It follows the name, not the slot,
+// so totals re-sorting under it don't make it jump around.
+const CYCLE = "*";
+const cycleList = (kind) => Object.entries(kind === "site" ? snap.sites : snap.apps)
+  .filter(([, secs]) => secs >= 1)
+  .sort((a, b) => b[1] - a[1]);
+
+function renderCycle(context, entry, settings, kind, advance = false) {
+  const list = cycleList(kind);
+  if (!list.length) {
+    return setImage(context, entry, draw.text({ top: kind === "site" ? "Websites" : "Apps", big: "—", bottom: "nothing yet today", color: draw.COLORS.muted }));
+  }
+  const c = entry.cycle || (entry.cycle = { name: null, at: 0 });
+  const every = (Number(settings.cycleSecs) || 5) * 1000;
+  let i = list.findIndex(([n]) => n === c.name);
+  if (i < 0) { i = 0; c.at = snap.now; }
+  else if (advance || snap.now - c.at >= every) { i = (i + 1) % list.length; c.at = snap.now; }
+  c.name = list[i][0];
+  const live = kind === "app" && snap.front === c.name;
+  setImage(context, entry, draw.text({
+    top: c.name,
+    big: t(settings, "duration", list[i][1]),
+    bottom: `${i + 1}/${list.length}${live ? " ● now" : ""}`,
     color: live ? draw.COLORS.ok : draw.COLORS.text,
   }));
 }
@@ -238,6 +267,9 @@ function press(context, entry) {
       return saveSettings(context, entry, { show: entry.settings.show === "used" ? "left" : "used" });
     case "today":
       return saveSettings(context, entry, { show: entry.settings.show === "web" ? "mac" : "web" });
+    case "time":
+      if (entry.settings.name === CYCLE) return renderCycle(context, entry, entry.settings, entry.settings.kind === "site" ? "site" : "app", true);
+      return send({ event: "showOk", context });
     default:
       send({ event: "showOk", context });
   }
