@@ -1,1 +1,1 @@
-{"version": "1.2.2", "url": "TimeLock-Mac.zip", "notes": "Fix: a paused VLC (and other players that keep their audio stream open while paused) no longer counts as playing. Playback is now read from the player's own keep-awake signals, which it drops when you pause."}
+{"version": "1.3.0", "url": "TimeLock-Mac.zip", "notes": "Goals: app and website times in the menu are coloured by the goals you set in the TimeLock extension (blue below your minimum, green once it's met, amber near your maximum, red past it). Hover a time to see its goal."}
