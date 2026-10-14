@@ -11,7 +11,7 @@
 import * as core from "/src/shared/core.js";
 const q = new URLSearchParams(location.search);
 const now = Date.now();
-const settings = { resetHour: 0, warnings: true, updateSource: "", clockSites: ["youtube.com", "github.com"], rules: [
+const settings = { resetHour: 0, warnings: true, updateSource: "", clockSites: ["youtube.com", "github.com"], goals: [{ kind: "site", name: "github.com", min: 60, max: null }, { kind: "site", name: "youtube.com", min: null, max: 60 }, { kind: "site", name: "reddit.com", min: null, max: 20 }, { kind: "app", name: "Visual Studio Code", min: 120, max: 240 }, { kind: "app", name: "Discord", min: null, max: 10 }], rules: [
   { id: "a", name: "Social", domains: ["reddit.com", "x.com"], apps: ["Discord"], limit: 30 },
   { id: "b", name: "youtube.com", domains: ["youtube.com"], limit: 60 },
   { id: "c", name: "News", domains: ["cnn.com"], limit: 20 },
@@ -32,6 +32,8 @@ const handlers = {
   setPassword: ({ password }) => (hasPassword = true, undefined),
   saveSettings: ({ settings: s, password }) => {
     for (const r of s.rules) { const v = core.validateRule(r); if (v.error) return fail(v.error, String(r.domains)); }
+    for (const g of s.goals || []) { const v = core.validateGoal(g); if (v.error) return fail(v.error, JSON.stringify(g)); }
+    s = { ...s, goals: (s.goals || []).map((g) => core.validateGoal(g).goal) };
     if (!core.isTightening(settings, s) && password !== PW) return fail("TL-401");
     Object.assign(settings, s, { rules: s.rules.map((r) => ({ ...core.validateRule(r).rule, id: r.id || Math.random().toString(36) })) });
   },

@@ -116,6 +116,7 @@ function snapshot(now = Date.now(), dir = DIR, processRunning) {
     browserConnected: !!browser,
     browserFresh: !!browser && now - browser.at < BROWSER_FRESH,
     limits,
+    goals: (browser && browser.goals) || [],
     errors,
   };
 }
@@ -162,6 +163,28 @@ function format(secs, fmt, auto = "duration") {
   }
 }
 
+// ---------- goals (same rule as the extension's core.goalState) ----------
+function goalFor(snap, kind, name) {
+  return (snap.goals || []).find((g) => g.kind === kind && (kind === "site" ? hostMatches(name, g.name) : g.name === name)) || null;
+}
+/// A site goal counts its subdomains together.
+const goalSeconds = (snap, goal, secs) => (goal && goal.kind === "site" ? timeFor(snap, "site", goal.name) : secs);
+function goalState(secs, goal) {
+  if (!goal) return "none";
+  const min = goal.min != null ? goal.min * 60 : null, max = goal.max != null ? goal.max * 60 : null;
+  if (max != null && secs >= max) return "over";
+  if (max != null && secs >= max * 0.75 && (min == null || secs >= min)) return "near";
+  if (min != null) return secs >= min ? "met" : "under";
+  return "none";
+}
+/// "max 1h 00m", "min 30m", "30m–1h 00m"
+function goalShort(goal) {
+  if (!goal) return "";
+  const m = (x) => duration(x * 60);
+  if (goal.min != null && goal.max != null) return `${m(goal.min)}–${m(goal.max)}`;
+  return goal.min != null ? `min ${m(goal.min)}` : `max ${m(goal.max)}`;
+}
+
 /// Time for one app or site today (sites include their subdomains).
 function timeFor(snap, kind, name) {
   if (!name) return 0;
@@ -171,4 +194,4 @@ function timeFor(snap, kind, name) {
   return snap.apps[name] || 0;
 }
 
-module.exports = { FORMATS, format, DIR, ERRORS, ERROR_LIST_URL, ERROR_LIST_RAW, describe, snapshot, limitStatus, hostMatches, duration, clock, sum, timeFor, localDay };
+module.exports = { goalFor, goalSeconds, goalState, goalShort, FORMATS, format, DIR, ERRORS, ERROR_LIST_URL, ERROR_LIST_RAW, describe, snapshot, limitStatus, hostMatches, duration, clock, sum, timeFor, localDay };

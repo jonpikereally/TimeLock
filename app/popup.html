@@ -47,6 +47,15 @@
       <div class="row" style="margin-top:10px"><span class="grow muted small" id="save-msg"></span><button class="btn primary" id="save">Save</button></div>
     </div>
 
+    <h2>Goals</h2>
+    <div class="card">
+      <p class="small muted" style="margin-top:0">Daily targets for any app or website. Timers turn <span class="g-under">blue</span> below your minimum, <span class="g-met">green</span> once it's met, <span class="g-near">amber</span> near your maximum and <span class="g-over">red</span> past it. Goals never lock anything, so they don't need your password.</p>
+      <div id="goals-edit"></div>
+      <button class="btn small" id="add-goal">+ Add a goal</button>
+      <div id="goal-err"></div>
+      <div class="row" style="margin-top:10px"><span class="grow muted small" id="goal-msg"></span><button class="btn primary" id="save-goals">Save goals</button></div>
+    </div>
+
     <h2>Mac app</h2>
     <div class="card" id="mac-card"></div>
 
@@ -61,6 +70,7 @@
   </section>
 </main>
 <datalist id="known-apps"></datalist>
+<datalist id="known-sites"></datalist>
 <script type="module" src="popup.js"></script>
 </body>
 </html>

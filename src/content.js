@@ -69,6 +69,7 @@
       .c.warn { background: rgba(230, 81, 0, .92); }
       .c.bad { background: rgba(198, 40, 40, .95); }
       .c.ok { background: rgba(46, 125, 50, .9); }
+      .c.goal { background: rgba(47, 91, 234, .9); }
       .c.near { opacity: .4; }
       .c.paused .t { opacity: .7; }
       svg { width: 14px; height: 14px; flex: none; }
@@ -200,8 +201,17 @@
     let secs, cls, tip;
     if (st.mode === "up") {
       secs = st.used + elapsed;
-      cls = "";
-      tip = `TimeLock: ${clock(secs)} spent on ${st.name} today.\nDrag to move · double-click to reset.`;
+      // Goal colours: blue below the minimum, green once it's met, amber
+      // from 75% of the maximum, red past it (same rule as core.goalState).
+      const g = st.goal;
+      if (g) {
+        const t = secs + (st.goalOffset || 0), min = g.min != null ? g.min * 60 : null, max = g.max != null ? g.max * 60 : null;
+        if (max != null && t >= max) cls = "bad";
+        else if (max != null && t >= max * 0.75 && (min == null || t >= min)) cls = "warn";
+        else if (min != null) cls = t >= min ? "ok" : "goal";
+        else cls = "";
+      } else cls = "";
+      tip = `TimeLock: ${clock(secs)} spent on ${st.name} today.${g ? ` (${g.text})` : ""}\nDrag to move · double-click to reset.`;
     } else if (st.unlockedUntil > now) {
       secs = (st.unlockedUntil - now) / 1000;
       cls = "ok";
@@ -212,7 +222,7 @@
       tip = `TimeLock: ${clock(secs)} left today on ${st.name} (${st.domains.join(", ")}).\nDrag to move · double-click to reset.`;
     }
     label.textContent = clock(secs);
-    for (const c of ["warn", "bad", "ok"]) box.classList.toggle(c, c === cls);
+    for (const c of ["warn", "bad", "ok", "goal"]) box.classList.toggle(c, c === cls);
     box.classList.toggle("paused", !isCounting);
     if (inFront() && away()) tip = `Paused: no mouse or keyboard for a minute.\n${tip}`;
     box.title = tip;

@@ -70,6 +70,25 @@ assert.deepEqual(c.setClock([], "x.com", true), ["x.com"]);
 assert.deepEqual(c.setClock(["x.com"], "x.com", true), ["x.com"], "no duplicates");
 assert.deepEqual(c.setClock(["youtube.com", "x.com"], "m.youtube.com", false), ["x.com"], "turning off removes the covering entry");
 
+// goals
+const goals = [{ kind: "site", name: "youtube.com", min: null, max: 60 }, { kind: "app", name: "Logic Pro", min: 60, max: 180 }, { kind: "app", name: "Anki", min: 20, max: null }];
+assert.equal(c.goalFor(goals, "site", "m.youtube.com").max, 60, "site goals cover subdomains");
+assert.equal(c.goalFor(goals, "app", "Logic"), null, "app names match exactly");
+assert.equal(c.goalState(10 * 60, goals[0]), "none", "max only: fine until 75%");
+assert.equal(c.goalState(45 * 60, goals[0]), "near");
+assert.equal(c.goalState(60 * 60, goals[0]), "over");
+assert.equal(c.goalState(30 * 60, goals[1]), "under", "below the minimum");
+assert.equal(c.goalState(90 * 60, goals[1]), "met");
+assert.equal(c.goalState(140 * 60, goals[1]), "near", "past 75% of the max after meeting the min");
+assert.equal(c.goalState(200 * 60, goals[1]), "over");
+assert.equal(c.goalState(25 * 60, goals[2]), "met");
+assert.equal(c.goalState(5, null), "none");
+assert.equal(c.goalText(goals[1]), "goal 1h 00m–3h 00m");
+assert.deepEqual(c.validateGoal({ kind: "site", name: "https://www.YouTube.com/x", max: "60" }).goal, { kind: "site", name: "youtube.com", min: null, max: 60 });
+assert.equal(c.validateGoal({ kind: "app", name: "Anki", min: 30, max: 10 }).error, "TL-505", "min above max");
+assert.equal(c.validateGoal({ kind: "app", name: "Anki" }).error, "TL-505", "needs a min or a max");
+assert.equal(c.validateGoal({ kind: "site", name: "nope", max: 5 }).error, "TL-504");
+
 // misc
 assert.equal(c.fmtDuration(42), "42s");
 assert.equal(c.fmtDuration(125 * 60), "2h 05m");

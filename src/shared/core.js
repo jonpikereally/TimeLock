@@ -115,6 +115,51 @@ export function validateRule(r) {
   return { rule: { id: r.id, name: String(r.name || "").trim() || domains[0] || apps[0], domains, apps, limit } };
 }
 
+// ---------- goals ----------
+// Soft daily targets for one app or website: at least `min` and/or at most
+// `max` minutes. Goals never lock anything; they only colour the timers.
+//   "under" below the minimum (blue)    "met"  minimum reached (green)
+//   "near"  75% of the maximum (amber)  "over" past the maximum (red)
+//   "none"  no goal, or nothing to say yet
+export const GOAL_NEAR = 0.75;
+
+export function goalFor(goals, kind, name) {
+  if (!name) return null;
+  return (goals || []).find((g) => g.kind === kind && (kind === "site" ? hostMatches(name, g.name) : g.name === name)) || null;
+}
+
+export function goalState(secs, goal) {
+  if (!goal) return "none";
+  const min = goal.min != null ? goal.min * 60 : null;
+  const max = goal.max != null ? goal.max * 60 : null;
+  if (max != null && secs >= max) return "over";
+  if (max != null && secs >= max * GOAL_NEAR && (min == null || secs >= min)) return "near";
+  if (min != null) return secs >= min ? "met" : "under";
+  return "none";
+}
+
+export function goalText(goal) {
+  if (!goal) return "";
+  const m = (x) => fmtDuration(x * 60);
+  if (goal.min != null && goal.max != null) return `goal ${m(goal.min)}–${m(goal.max)}`;
+  if (goal.min != null) return `goal at least ${m(goal.min)}`;
+  return `goal at most ${m(goal.max)}`;
+}
+
+export function validateGoal(g) {
+  const kind = g.kind === "app" ? "app" : "site";
+  const name = kind === "site" ? cleanDomain(g.name) : String(g.name || "").trim();
+  if (!name || name.length > 80) return { error: "TL-504" };
+  const num = (v) => (v === "" || v == null ? null : Number(v));
+  const min = num(g.min), max = num(g.max);
+  for (const v of [min, max]) {
+    if (v != null && (!Number.isFinite(v) || v < 0 || v > 1440 || Math.round(v) !== v)) return { error: "TL-505" };
+  }
+  if (min == null && max == null) return { error: "TL-505" };
+  if (min != null && max != null && min > max) return { error: "TL-505" };
+  return { goal: { kind, name, min, max } };
+}
+
 export function fmtDuration(secs) {
   const m = Math.floor(secs / 60);
   if (m < 1) return `${Math.floor(secs)}s`;

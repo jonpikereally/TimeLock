@@ -12,12 +12,40 @@ struct BrowserSnapshot: Codable {
         var locked: Bool
         var unlockedUntil: Double
     }
+    /// Soft daily targets set in the extension (minutes; nil = not set).
+    struct Goal: Codable {
+        var kind: String   // "app" or "site"
+        var name: String
+        var min: Double?
+        var max: Double?
+
+        /// Same rule as the extension's core.goalState.
+        func state(_ secs: Double) -> GoalState {
+            let lo = min.map { $0 * 60 }, hi = max.map { $0 * 60 }
+            if let hi, secs >= hi { return .over }
+            if let hi, secs >= hi * 0.75, lo == nil || secs >= lo! { return .near }
+            if let lo { return secs >= lo ? .met : .under }
+            return .none
+        }
+    }
+    enum GoalState { case none, under, met, near, over }
+
     var at: Double
     var day: String
     var resetHour: Int
     var sites: [String: Double]
     var limits: [Limit]
+    var goals: [Goal]?
     var version: String?
+
+    func goal(app name: String) -> Goal? { goals?.first { $0.kind == "app" && $0.name == name } }
+    func goal(site host: String) -> Goal? {
+        goals?.first { $0.kind == "site" && (host == $0.name || host.hasSuffix("." + $0.name)) }
+    }
+    /// A site goal counts all its subdomains together.
+    func siteSeconds(_ domain: String) -> Double {
+        sites.reduce(0) { $0 + (($1.key == domain || $1.key.hasSuffix("." + domain)) ? $1.value : 0) }
+    }
 
     var date: Date { Date(timeIntervalSince1970: at / 1000) }
 }

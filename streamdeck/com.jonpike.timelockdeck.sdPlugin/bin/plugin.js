@@ -163,13 +163,24 @@ function renderTime(context, entry, settings) {
   if (b) return showProblem(context, entry, ...b);
   if (!settings.name) return setImage(context, entry, draw.text({ top: kind === "site" ? "Website" : "App", big: "—", bottom: "pick one" }));
   if (settings.name === CYCLE) return renderCycle(context, entry, settings, kind);
+  const secs = data.timeFor(snap, kind, settings.name);
   const live = kind === "app" && snap.front === settings.name;
+  const g = goalLook(kind, settings.name, secs, live);
   setImage(context, entry, draw.text({
     top: settings.name,
-    big: t(settings, "duration", data.timeFor(snap, kind, settings.name)),
-    bottom: live ? "● now" : "today",
-    color: live ? draw.COLORS.ok : draw.COLORS.text,
+    big: t(settings, "duration", secs),
+    bottom: [live ? "● now" : g.goal ? "" : "today", g.text].filter(Boolean).join(" · "),
+    color: g.color,
   }));
+}
+
+/// Goal colouring for one app or site: blue below the minimum, green once
+/// it's met, amber near the maximum, red past it. Without a goal, the number
+/// is green while that app is being counted, white otherwise.
+function goalLook(kind, name, secs, live) {
+  const goal = data.goalFor(snap, kind, name);
+  const state = data.goalState(data.goalSeconds(snap, goal, secs), goal);
+  return { goal, text: data.goalShort(goal), color: draw.goalColor(state, live ? draw.COLORS.ok : draw.COLORS.text) };
 }
 
 // "All apps today (cycle)": steps through everything used today, most time
@@ -192,11 +203,12 @@ function renderCycle(context, entry, settings, kind, advance = false) {
   else if (advance || snap.now - c.at >= every) { i = (i + 1) % list.length; c.at = snap.now; }
   c.name = list[i][0];
   const live = kind === "app" && snap.front === c.name;
+  const g = goalLook(kind, c.name, list[i][1], live);
   setImage(context, entry, draw.text({
     top: c.name,
     big: t(settings, "duration", list[i][1]),
-    bottom: `${i + 1}/${list.length}${live ? " ● now" : ""}`,
-    color: live ? draw.COLORS.ok : draw.COLORS.text,
+    bottom: [`${i + 1}/${list.length}`, live ? "● now" : "", g.text].filter(Boolean).join(" · "),
+    color: g.color,
   }));
 }
 
@@ -219,7 +231,9 @@ function renderNow(context, entry, settings) {
   const bg = snap.background;
   const playing = bg.length ? `♪ ${bg.join(", ")}` : "";
   if (snap.state === "counting" && snap.front) {
-    return setImage(context, entry, draw.text({ top: snap.front, big: t(settings, "duration", snap.apps[snap.front] || 0), sub: playing, bottom: "● counting", color: draw.COLORS.ok }));
+    const secs = snap.apps[snap.front] || 0;
+    const g = goalLook("app", snap.front, secs, true);
+    return setImage(context, entry, draw.text({ top: snap.front, big: t(settings, "duration", secs), sub: playing, bottom: ["● counting", g.text].filter(Boolean).join(" · "), color: g.color }));
   }
   const label = { away: "Away", screenLocked: "Screen locked", idle: "Paused" }[snap.state] || "Paused";
   setImage(context, entry, draw.text({ top: "TimeLock", big: label, sub: playing, bottom: playing ? "counting media" : "not counting", color: draw.COLORS.muted }));

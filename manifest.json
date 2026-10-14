@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5GxLTgSCIa0dbv+SUb/uKwMlNW2afoU/9IAZJXDehU3xZk0tM6I+zQGtFT+1nKLpmmNa9CZ4q7VBp9cT0hFKyJOrR2QkGPHnAcU4P+/YE1L8KJeecZbg/JP3yCRyURAGOVmbkRO9ZjPx3Jg7steR63QxuSUnd/9EVBInwhzhZ8PmAyESo8A8LEUNl5QkfXlncJaimR3IcHAfQ4Kzkp0R4K+Z0hgerS3SoKmxYWLhvAW6PpMsFZgWqluhM+q8q/u7xXyorjI1rcOYz0dGHVZCJMZXOIH5bQb+RHVc6xxIKt4bY5XVBbVzCSkWNC033ldQHWVrtcH7yLoz1nri0u2+PQIDAQAB",
   "name": "TimeLock",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Tracks how long you spend on each website and locks you out of the ones you choose once you hit your daily limit.",
   "homepage_url": "https://github.com/jonpikereally/TimeLock",
   "minimum_chrome_version": "120",

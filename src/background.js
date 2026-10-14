@@ -7,7 +7,7 @@ const FEED = `https://raw.githubusercontent.com/${REPO}/main/updates/latest.json
 const BLOCKED = chrome.runtime.getURL("app/blocked.html");
 const MAX_GAP = 90; // seconds; a longer gap between ticks means the computer slept
 const KEEP_DAYS = 35;
-const DEFAULTS = { rules: [], resetHour: 0, warnings: true, updateSource: "", clockSites: [] };
+const DEFAULTS = { rules: [], resetHour: 0, warnings: true, updateSource: "", clockSites: [], goals: [] };
 
 // Every state change goes through one queue, so two events firing together
 // can't count the same seconds twice.
@@ -104,7 +104,7 @@ async function macSync(force = false) {
   let mac;
   try {
     const res = await chrome.runtime.sendNativeMessage(MAC_HOST, {
-      type: "sync", day, resetHour: s.resetHour, sites: usage, limits, version: VERSION, at: now,
+      type: "sync", day, resetHour: s.resetHour, sites: usage, limits, goals: s.goals, version: VERSION, at: now,
     });
     if (!res || !res.ok) throw new Error((res && res.error) || "empty reply");
     await chrome.storage.local.set({ [`apps:${day}`]: res.apps || {} });
@@ -278,7 +278,12 @@ const handlers = {
     // No limit on this site: the clock counts up the time spent today instead.
     if (!mine.length) {
       const domain = s.clockSites.find((d) => core.hostMatches(host, d));
-      return { mode: "up", name: domain, used: core.ruleSeconds({ domains: [domain] }, usage) };
+      const used = core.ruleSeconds({ domains: [domain] }, usage);
+      const goal = core.goalFor(s.goals, "site", host);
+      // The goal may cover a wider domain than the clock (e.g. google.com vs
+      // mail.google.com); goalOffset lets the page add the difference.
+      const goalUsed = goal ? core.ruleSeconds({ domains: [goal.name] }, usage) : 0;
+      return { mode: "up", name: domain, used, goal: goal && { min: goal.min, max: goal.max, text: core.goalText(goal) }, goalOffset: goalUsed - used };
     }
     const [r, st] = mine[0];
     return { name: r.name, domains: r.domains, left: st.left, used: st.used, limit: st.limit, unlockedUntil: st.unlockedUntil };
@@ -362,7 +367,14 @@ const handlers = {
       warnings: settings.warnings !== false,
       updateSource: String(settings.updateSource || "").trim(),
       clockSites: [...new Set((settings.clockSites || []).map(core.cleanDomain).filter(Boolean))],
+      goals: [],
     };
+    // Goals are soft targets: never locked, so changing them never needs the password.
+    for (const g of settings.goals || []) {
+      const v = core.validateGoal(g);
+      if (v.error) throw coded(v.error, JSON.stringify(g));
+      if (!next.goals.some((x) => x.kind === v.goal.kind && x.name === v.goal.name)) next.goals.push(v.goal);
+    }
     if (rules.length && !pw) throw coded("TL-405");
     if (!core.isTightening(old, next)) await verify(password);
     try {

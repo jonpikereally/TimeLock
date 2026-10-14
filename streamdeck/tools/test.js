@@ -25,6 +25,7 @@ fs.writeFileSync(path.join(dir, "status.json"), JSON.stringify({
 }));
 fs.writeFileSync(path.join(dir, "browser.json"), JSON.stringify({
   at: now - 5000, day, resetHour: 0, version: "2.0.1",
+  goals: [{ kind: "app", name: "Visual Studio Code", min: 120, max: 240 }, { kind: "site", name: "reddit.com", min: null, max: 5 }, { kind: "app", name: "Brave Browser", min: null, max: 40 }],
   sites: { "x.com": 900, "old.reddit.com": 300, "reddit.com": 200, "youtube.com": 3300, "github.com": 1200 },
   limits: [
     { name: "Social", domains: ["x.com", "reddit.com"], apps: ["Discord"], limit: 1800, used: 0, locked: false, unlockedUntil: 0 },
@@ -62,6 +63,13 @@ fs.writeFileSync(path.join(dir, "browser.json"), JSON.stringify({
   assert.equal(data.format(3960, "dec"), "1.1 h");
   assert.equal(data.format(754, "auto", "clock"), "12:34");
   assert.equal(data.format(754, undefined), "12m");
+  // Goals
+  assert.equal(data.goalState(5400, data.goalFor(s, "app", "Visual Studio Code")), "under");
+  const rg = data.goalFor(s, "site", "old.reddit.com");
+  assert.equal(data.goalSeconds(s, rg, 300), 500, "site goal counts subdomains together");
+  assert.equal(data.goalState(500, rg), "over");
+  assert.equal(data.goalState(2100, data.goalFor(s, "app", "Brave Browser")), "near");
+  assert.equal(data.goalShort(data.goalFor(s, "app", "Visual Studio Code")), "2h 00m–4h 00m");
 
   // Mac app quit: status older than 30 s → not running, totals from the day file.
   const stale = data.snapshot(now + 60000, dir);
@@ -140,8 +148,10 @@ setTimeout(() => {
     assert.ok(decodeURIComponent(byCtx("ctx12")[0]).includes(">5 min<"), "Limit ring in minutes format");
     assert.equal(byCtx("ctx13").filter((v) => v.title).at(-1).value, "0.1 h left", "dial in decimal hours");
     const cyc = byCtx("ctx14").filter((v) => typeof v === "string").map(decodeURIComponent);
-    assert.ok(cyc[0].includes(">Visual Studio Code<") && cyc[0].includes(">1/4 ● now<"), "cycle starts on the app with the most time");
-    assert.ok(cyc.at(-1).includes(">Brave Browser<") && cyc.at(-1).includes(">2/4<"), "pressing skips to the next app");
+    assert.ok(cyc[0].includes(">Visual Studio Code<") && cyc[0].includes("1/4 · ● now · 2h 00m–4h 00m"), "cycle starts on the app with the most time");
+    assert.ok(cyc[0].includes('fill="#6d9bff"'), "below its minimum → blue");
+    assert.ok(cyc.at(-1).includes(">Brave Browser<") && cyc.at(-1).includes("2/4 · max 40m") && cyc.at(-1).includes('fill="#ff9800"'), "pressing skips to the next app; near its max → amber");
+    assert.ok(decodeURIComponent(byCtx("ctx7").at(-1)).includes('fill="#ef5350"'), "reddit.com over its max → red");
     const sites = byCtx("ctx15").filter((v) => typeof v === "string").map(decodeURIComponent);
     assert.ok(sites[0].includes(">youtube.com<") && sites[0].includes(">1/5<"), "site cycle starts on the top site");
     assert.ok(sites.some((x) => x.includes(">github.com<") && x.includes(">2/5<")), "site cycle advanced on its own after 2 s");

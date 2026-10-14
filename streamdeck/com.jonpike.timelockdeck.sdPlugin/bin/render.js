@@ -9,7 +9,12 @@ const COLORS = {
   warn: "#ff9800",
   bad: "#ef5350",
   ok: "#66bb6a",
+  goal: "#6d9bff",
 };
+
+/// Colour for a goal state; `fallback` when there's no goal.
+const GOAL_COLORS = { under: COLORS.goal, met: COLORS.ok, near: COLORS.warn, over: COLORS.bad };
+const goalColor = (state, fallback = COLORS.text) => GOAL_COLORS[state] || fallback;
 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const url = (svg) => "data:image/svg+xml;charset=utf8," + encodeURIComponent(svg);
@@ -76,4 +81,4 @@ function limitColor(st) {
   return COLORS.accent;
 }
 
-module.exports = { COLORS, ring, text, problem, dialIcon, limitColor };
+module.exports = { goalColor, COLORS, ring, text, problem, dialIcon, limitColor };

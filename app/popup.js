@@ -1,11 +1,23 @@
 import { $, esc, send, errorBox, fmtTime, VERSION } from "./ui.js";
-import { fmtDuration, hostMatches, isTightening, cleanDomain, hostOf, clockOn, setClock, newer } from "../src/shared/core.js";
+import { fmtDuration, hostMatches, isTightening, cleanDomain, hostOf, clockOn, setClock, newer, goalFor, goalState, goalText } from "../src/shared/core.js";
 import { REPO, ERROR_LIST_URL } from "../src/shared/errors.js";
 
 const MAC_DOWNLOAD = `https://github.com/${REPO}/raw/main/updates/mac/TimeLock-Mac.zip`;
 
 let state;
 let draft; // settings being edited in the Settings view
+let goalsDraft = []; // goals being edited (saved on their own, never need the password)
+
+// A time cell coloured by its goal (see core.goalState), with the goal on hover.
+// A website goal counts all its subdomains together (reddit.com + old.reddit.com).
+function timeCell(kind, name, secs) {
+  const goal = goalFor(state.settings.goals, kind, name);
+  const goalSecs = goal && kind === "site"
+    ? Object.entries(state.usage || {}).reduce((t, [h, x]) => (hostMatches(h, goal.name) ? t + x : t), 0)
+    : secs;
+  const st = goalState(goalSecs, goal);
+  return `<span class="t ${st === "none" ? "" : "g-" + st}" title="${esc(goal ? goalText(goal) : "")}">${fmtDuration(secs)}</span>`;
+}
 
 async function refresh() {
   try {
@@ -146,7 +158,7 @@ function renderHome() {
   $("#apps-section").classList.toggle("hidden", !appRows.length);
   $("#apps-total").textContent = fmtDuration(appRows.reduce((t, [, s]) => t + s, 0));
   $("#apps").innerHTML = appRows.slice(0, 15)
-    .map(([a, s]) => `<li><span class="grow ellipsis">${esc(a)}</span><span class="t">${fmtDuration(s)}</span></li>`).join("");
+    .map(([a, s]) => `<li><span class="grow ellipsis">${esc(a)}</span>${timeCell("app", a, s)}</li>`).join("");
 
   const rows = Object.entries(usage).sort((a, b) => b[1] - a[1]);
   const total = rows.reduce((t, [, s]) => t + s, 0);
@@ -156,7 +168,7 @@ function renderHome() {
   if (!rows.length) list.innerHTML = `<li class="empty">Nothing tracked yet today.</li>`;
   for (const [h, s] of rows.slice(0, 15)) {
     const li = document.createElement("li");
-    li.innerHTML = `<span class="grow ellipsis">${esc(h)}</span><span class="t">${fmtDuration(s)}</span>`;
+    li.innerHTML = `<span class="grow ellipsis">${esc(h)}</span>${timeCell("site", h, s)}`;
     li.append(clockButton(h));
     list.append(li);
   }
@@ -171,6 +183,8 @@ function openSettings() {
   $("#toggle").title = "Back";
   draft = structuredClone(state.settings);
   renderPassword();
+  goalsDraft = structuredClone(state.settings.goals || []);
+  renderGoals();
   renderMac();
   renderRuleEditor();
   $("#reset-hour").value = draft.resetHour;
@@ -217,6 +231,44 @@ function renderPassword() {
       err.append(errorBox(e, { compact: true }));
     }
   };
+}
+
+function renderGoals() {
+  const box = $("#goals-edit");
+  box.replaceChildren();
+  const sites = new Set([...Object.keys(state.usage || {}), ...(state.settings.clockSites || []), ...state.settings.rules.flatMap((r) => r.domains)]);
+  $("#known-sites").innerHTML = [...sites].sort().map((d) => `<option value="${esc(d)}">`).join("");
+  goalsDraft.forEach((g, i) => {
+    const el = document.createElement("div");
+    el.className = "card goal-edit";
+    el.innerHTML = `
+      <select class="kind"><option value="site">Website</option><option value="app">Mac app</option></select>
+      <input class="name" placeholder="${g.kind === "app" ? "App name, e.g. Logic Pro" : "youtube.com"}" list="${g.kind === "app" ? "known-apps" : "known-sites"}" value="${esc(g.name)}">
+      <button class="btn icon del" title="Remove this goal">🗑</button>
+      <div class="mins"><span title="Turns green once you reach this">Min</span><input class="min" type="number" min="0" max="1440" placeholder="–" value="${g.min ?? ""}"><span title="Turns amber at 75% and red past this">Max</span><input class="max" type="number" min="0" max="1440" placeholder="–" value="${g.max ?? ""}"><span>minutes a day</span></div>`;
+    $(".kind", el).value = g.kind;
+    $(".kind", el).onchange = (e) => { g.kind = e.target.value; renderGoals(); };
+    $(".name", el).oninput = (e) => { g.name = e.target.value.trim(); };
+    $(".min", el).oninput = (e) => { g.min = e.target.value === "" ? null : Number(e.target.value); };
+    $(".max", el).oninput = (e) => { g.max = e.target.value === "" ? null : Number(e.target.value); };
+    $(".del", el).onclick = () => { goalsDraft.splice(i, 1); renderGoals(); };
+    box.append(el);
+  });
+  if (!goalsDraft.length) box.innerHTML = `<p class="small muted">No goals yet.</p>`;
+}
+
+async function saveGoals() {
+  $("#goal-err").replaceChildren();
+  $("#goal-msg").textContent = "";
+  try {
+    await send("saveSettings", { settings: { ...state.settings, goals: goalsDraft } });
+    state = await send("state");
+    goalsDraft = structuredClone(state.settings.goals || []);
+    renderGoals();
+    $("#goal-msg").textContent = "Goals saved ✓";
+  } catch (e) {
+    $("#goal-err").append(errorBox(e, { compact: true }));
+  }
 }
 
 function renderMac() {
@@ -332,6 +384,8 @@ $("#reset-hour").onchange = updateSaveState;
 $("#warnings").onchange = updateSaveState;
 $("#update-source").oninput = updateSaveState;
 $("#save").onclick = save;
+$("#add-goal").onclick = () => { goalsDraft.push({ kind: "site", name: "", min: null, max: null }); renderGoals(); };
+$("#save-goals").onclick = saveGoals;
 $("#check-updates").onclick = checkUpdates;
 $("#gh").href = `https://github.com/${REPO}`;
 $("#errlist").href = ERROR_LIST_URL;

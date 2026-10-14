@@ -1,7 +1,7 @@
 <!doctype html>
 <!-- Shows the countdown clock from src/content.js on a fake page.
      Serve the repo root and open /tests/clock-harness.html?left=330 (seconds left),
-     ?unlocked=600 for the green unlocked state, or ?up=754 for the count-up clock on a site with no limit. -->
+     ?unlocked=600 for the green unlocked state, or ?up=754 for the count-up clock on a site with no limit (add &min=20 and/or &max=15 for goal colours). -->
 <html><head><meta charset="utf-8"><title>TimeLock clock harness</title>
 <style>body{margin:0;font:15px sans-serif;background:#fafafa}header{background:#ff0000;color:#fff;padding:14px 20px;font-weight:700}main{padding:20px;max-width:700px}</style></head>
 <body><header>Pretend video site</header><main><p>Some page content. The clock should sit in the top-right corner, tick every second, and fade when the mouse comes near.</p></main>
@@ -9,8 +9,8 @@
 const q = new URLSearchParams(location.search);
 const now = Date.now();
 const mem = {};
-window.chrome = { storage: { local: { get: async (k) => ({ [k]: mem[k] }), set: async (o) => Object.assign(mem, o) } }, runtime: { sendMessage: async (m) => m.type === "pageStatus"
-  ? { ok: true, result: q.has("up") ? { mode: "up", name: "github.com", used: Number(q.get("up")) } : { name: "Video", domains: ["youtube.com"], left: Number(q.get("left") ?? 1834), used: 1766, limit: 3600,
+window.chrome = { storage: { local: { get: async (k) => ({ [k]: mem[k] }), set: async (o) => Object.assign(mem, o) } }, runtime: { onMessage: { addListener() {} }, sendMessage: async (m) => m.type === "pageStatus"
+  ? { ok: true, result: q.has("up") ? { mode: "up", name: "github.com", used: Number(q.get("up")), goalOffset: 0, goal: (q.has("min") || q.has("max")) ? { min: q.has("min") ? Number(q.get("min")) : null, max: q.has("max") ? Number(q.get("max")) : null, text: "goal" } : null } : { name: "Video", domains: ["youtube.com"], left: Number(q.get("left") ?? 1834), used: 1766, limit: 3600,
       unlockedUntil: q.has("unlocked") ? now + Number(q.get("unlocked")) * 1000 : 0 } }
   : { ok: true } } };
 </script>

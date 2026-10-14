@@ -77,6 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             menu.addItem(.separator())
         }
 
+        let browser = Store.loadBrowser()
         // Apps today
         let apps = tracker.today.sorted { $0.value > $1.value }
         let total = apps.reduce(0) { $0 + $1.value }
@@ -86,7 +87,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let live: Bool
             if case .counting(let n) = tracker.state { live = n == name } else { live = false }
             let playing = tracker.playingInBackground.contains(name)
-            menu.addItem(row((live ? "● " : playing ? "♪ " : "    ") + name, Self.duration(secs)))
+            let goal = browser?.goal(app: name)
+            menu.addItem(row((live ? "● " : playing ? "♪ " : "    ") + name, Self.duration(secs), goal: goal, goalSecs: secs))
         }
         if apps.count > 10 {
             let more = NSMenuItem(title: "More apps", action: nil, keyEquivalent: "")
@@ -99,7 +101,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(.separator())
 
         // Browser (from the extension)
-        if let b = Store.loadBrowser(), Date().timeIntervalSince(b.date) < Self.browserFresh, b.day == tracker.day {
+        if let b = browser, Date().timeIntervalSince(b.date) < Self.browserFresh, b.day == tracker.day {
             if !b.limits.isEmpty {
                 menu.addItem(header("Daily limits"))
                 for l in b.limits { menu.addItem(row(l.name, limitText(l))) }
@@ -107,7 +109,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             let sites = b.sites.sorted { $0.value > $1.value }
             menu.addItem(header("Today in the browser — \(Self.duration(sites.reduce(0) { $0 + $1.value }))"))
-            for (host, secs) in sites.prefix(8) { menu.addItem(row("    " + host, Self.duration(secs))) }
+            for (host, secs) in sites.prefix(8) {
+                let goal = b.goal(site: host)
+                menu.addItem(row("    " + host, Self.duration(secs), goal: goal, goalSecs: goal.map { b.siteSeconds($0.name) } ?? secs))
+            }
             if sites.isEmpty { menu.addItem(info("No websites yet today.")) }
         } else {
             menu.addItem(header("Browser"))
@@ -188,20 +193,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return i
     }
 
-    /// "Name ........ 12m" with the time right-aligned.
-    private func row(_ left: String, _ right: String) -> NSMenuItem {
+    /// Goal colours, the same as the extension: blue below the minimum, green
+    /// once it's met, amber near the maximum, red past it.
+    private static func color(_ state: BrowserSnapshot.GoalState) -> NSColor {
+        switch state {
+        case .none: return .secondaryLabelColor
+        case .under: return .systemBlue
+        case .met: return .systemGreen
+        case .near: return .systemOrange
+        case .over: return .systemRed
+        }
+    }
+
+    private static func goalText(_ g: BrowserSnapshot.Goal) -> String {
+        switch (g.min, g.max) {
+        case let (lo?, hi?): return "Goal: \(duration(lo * 60))–\(duration(hi * 60)) a day"
+        case let (lo?, nil): return "Goal: at least \(duration(lo * 60)) a day"
+        case let (nil, hi?): return "Goal: at most \(duration(hi * 60)) a day"
+        default: return ""
+        }
+    }
+
+    /// "Name ........ 12m" with the time right-aligned, coloured by its goal.
+    private func row(_ left: String, _ right: String, goal: BrowserSnapshot.Goal? = nil, goalSecs: Double = 0) -> NSMenuItem {
+        let state = goal?.state(goalSecs) ?? .none
         let style = NSMutableParagraphStyle()
         style.tabStops = [NSTextTab(textAlignment: .right, location: 300)]
         let text = NSMutableAttributedString(string: "\(left)\t", attributes: [
             .font: NSFont.menuFont(ofSize: 0), .paragraphStyle: style, .foregroundColor: NSColor.labelColor,
         ])
         text.append(NSAttributedString(string: right, attributes: [
-            .font: NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .regular),
-            .paragraphStyle: style, .foregroundColor: NSColor.secondaryLabelColor,
+            .font: NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: state == .none ? .regular : .semibold),
+            .paragraphStyle: style, .foregroundColor: Self.color(state),
         ]))
         let i = NSMenuItem(title: left, action: #selector(noop), keyEquivalent: "")
         i.target = self
         i.attributedTitle = text
+        if let goal { i.toolTip = Self.goalText(goal) }
         return i
     }
 

@@ -26,6 +26,8 @@ Codes are grouped: `1xx` extension updates, `2xx` time tracking, `3xx` blocking,
 | `TL-501` | A limit has a site that isn't a valid domain, or no sites at all. | Type plain domains like `youtube.com, reddit.com`. Subdomains are covered automatically. |
 | `TL-502` | A limit's minutes aren't a whole number between 0 and 1440. | Fix the number. 0 means the sites are blocked all day. |
 | `TL-503` | Saving settings failed. | Try again. If it repeats, copy the details and open an issue. |
+| `TL-504` | A goal's app or website isn't valid (a website must be a domain like `youtube.com`; an app must have a name). | Fix the name in Settings → Goals. App names must match exactly how TimeLock lists them. |
+| `TL-505` | A goal's minutes aren't valid: not whole minutes between 0 and 1440, neither a minimum nor a maximum set, or a minimum bigger than the maximum. | Fix the minutes in Settings → Goals. |
 | `TL-601` | The extension found the TimeLock Mac app but the connection failed, so app time isn't counted right now. | Open TimeLock from ~/Applications once (it re-registers its connection with your browsers on every launch), then click **Check connection** in the extension's Settings. If you moved the app, open it from its new place. |
 | `TL-602` | **Mac app:** couldn't register itself with your browsers, so the extension can't reach it. | Check that `~/Library/Application Support` is writable, then quit and reopen TimeLock from the menu bar. In the extension, click **Check connection** in Settings. |
 | `TL-603` | **Mac app:** couldn't create its data folder (`~/Library/Application Support/TimeLock`), so app time can't be saved. | Check that your disk isn't full and that folder is writable, then reopen TimeLock. |
