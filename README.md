@@ -14,6 +14,10 @@ The optional **TimeLock for Mac** menu bar app tracks your time in Mac apps too.
 
 ## Install
 
+**Quickest:** `curl -fsSL https://raw.githubusercontent.com/jonpikereally/TimeLock/main/install.sh | bash` sets up the Mac app (built from source), the Stream Deck plugin and the folder for the extension. To set it up with Claude's help, see [BUILD-WITH-CLAUDE.md](BUILD-WITH-CLAUDE.md).
+
+By hand:
+
 1. Download this repo (green **Code** button → Download ZIP) and unzip it somewhere permanent, or `git clone` it.
 2. Open `chrome://extensions`, turn on **Developer mode** (top right), click **Load unpacked**, and choose the `TimeLock` folder.
 3. Pin TimeLock to the toolbar, open it, and set a password. Then add limits.
