@@ -40,9 +40,10 @@ async function frontHost() {
   if (!win || !win.focused) return null;
   const [tab] = await chrome.tabs.query({ active: true, windowId: win.id });
   if (!tab) return null;
-  const { idle } = await chrome.storage.session.get("idle");
-  // Away from the keyboard counts only while the tab is playing sound (videos).
-  if (idle && idle !== "active" && !tab.audible) return null;
+  const { idle, [`media:${tab.id}`]: video } = await chrome.storage.session.get(["idle", `media:${tab.id}`]);
+  // After a minute with no mouse or keyboard input, time stops counting
+  // unless the tab is playing sound or a video (muted videos included).
+  if (idle && idle !== "active" && !tab.audible && !video) return null;
   return core.hostOf(tab.url);
 }
 
@@ -238,6 +239,13 @@ const handlers = {
     return clockSites;
   },
 
+  // A page reports that a video/audio element started or stopped playing.
+  async media({ playing }, sender) {
+    if (!sender.tab) return;
+    await chrome.storage.session.set({ [`media:${sender.tab.id}`]: !!playing });
+    tick("media");
+  },
+
   async logError({ code, details }) {
     await logError(["TL-203", "TL-204"].includes(code) ? code : "TL-999", details);
   },
@@ -384,6 +392,7 @@ chrome.idle.onStateChanged.addListener(async (state) => {
 });
 
 chrome.tabs.onActivated.addListener(() => tick("tab switch"));
+chrome.tabs.onRemoved.addListener((id) => chrome.storage.session.remove(`media:${id}`));
 chrome.tabs.onUpdated.addListener((id, info) => (info.url || info.audible !== undefined) && tick("navigation"));
 chrome.windows.onFocusChanged.addListener(() => tick("focus"));
 chrome.storage.onChanged.addListener((changes, area) => area === "local" && changes.settings && tick("settings"));

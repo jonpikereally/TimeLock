@@ -1,1 +1,1 @@
-Fixes the update banner offering an older version than the one you're running, left over from before a reload.
+Away detection is smarter: after a minute with no mouse or keyboard input the timer pauses unless a video is playing, and now muted videos count as playing too. The on-page clock pauses at the same moment instead of catching up later.

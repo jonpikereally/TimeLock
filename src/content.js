@@ -7,8 +7,10 @@
   window.__timelockClock = true;
 
   const SYNC_MS = 15000;
-  let st = null; // { left, used, limit, unlockedUntil, name, domains }
+  let st = null; // { left, used, limit, unlockedUntil, name, domains } or { mode: "up", used, name }
   let syncedAt = 0;
+  let localSecs = 0; // counted here since the last sync
+  let lastRender = Date.now();
   let host, box, label;
 
   const pad = (n) => String(n).padStart(2, "0");
@@ -18,9 +20,34 @@
     return h ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
   }
 
-  // Time only runs down while you're actually looking at this tab,
-  // matching how the background counts.
-  const counting = () => document.visibilityState === "visible" && document.hasFocus();
+  // ---------- away-from-keyboard and video detection ----------
+  // Matches how the background counts: time runs only while this tab is in
+  // front, and stops after a minute with no mouse or keyboard input, unless
+  // a video (or audio) is playing, muted or not.
+  const AWAY_MS = 60000;
+  let lastInput = Date.now();
+  for (const ev of ["mousemove", "mousedown", "keydown", "wheel", "touchstart", "scroll"]) {
+    addEventListener(ev, () => (lastInput = Date.now()), { capture: true, passive: true });
+  }
+  const mediaPlaying = () =>
+    [...document.querySelectorAll("video, audio")].some((m) => !m.paused && !m.ended && m.readyState > 2);
+  const away = () => Date.now() - lastInput > AWAY_MS && !mediaPlaying();
+  const inFront = () => document.visibilityState === "visible" && document.hasFocus();
+  const counting = () => inFront() && !away();
+
+  // Tell the background when playback starts or stops, so a muted video
+  // still counts while you're not touching anything (tab.audible misses it).
+  let reported = null;
+  function reportMedia() {
+    const playing = mediaPlaying();
+    if (playing === reported) return;
+    reported = playing;
+    chrome.runtime.sendMessage({ type: "media", playing }).catch(() => {});
+  }
+  for (const ev of ["play", "playing", "pause", "ended", "emptied"]) {
+    document.addEventListener(ev, () => setTimeout(reportMedia, 50), true);
+  }
+  setInterval(reportMedia, 10000);
 
   function build() {
     host = document.createElement("timelock-clock");
@@ -160,7 +187,10 @@
     }
     if (!host || !host.isConnected) build();
     const now = Date.now();
-    const elapsed = counting() ? (now - syncedAt) / 1000 : 0;
+    const isCounting = counting();
+    if (isCounting) localSecs += Math.min(5, (now - lastRender) / 1000);
+    lastRender = now;
+    const elapsed = localSecs;
     let secs, cls, tip;
     if (st.mode === "up") {
       secs = st.used + elapsed;
@@ -177,7 +207,8 @@
     }
     label.textContent = clock(secs);
     for (const c of ["warn", "bad", "ok"]) box.classList.toggle(c, c === cls);
-    box.classList.toggle("paused", !counting());
+    box.classList.toggle("paused", !isCounting);
+    if (inFront() && away()) tip = `Paused: no mouse or keyboard for a minute.\n${tip}`;
     box.title = tip;
     box.querySelector(".hand").style.transform = `rotate(${(Math.floor(now / 1000) % 60) * 6}deg)`;
     // Out of time: ask the background now, which locks the site straight away.
@@ -193,6 +224,7 @@
       if (res && res.ok) {
         st = res.result;
         syncedAt = Date.now();
+        localSecs = 0;
       }
     } catch (e) {
       // "Extension context invalidated" after TimeLock is reloaded: stop quietly.
