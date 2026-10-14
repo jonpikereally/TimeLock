@@ -43,6 +43,8 @@ mkdir -p "$APP/Contents/MacOS"
 lipo -create -output "$APP/Contents/MacOS/TimeLock" \
   "$CACHE/TimeLock-arm64" "$CACHE/TimeLock-x86_64"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+mkdir -p "$APP/Contents/Resources"
+cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP/Contents/Info.plist"
 codesign --force --sign - "$APP"
 

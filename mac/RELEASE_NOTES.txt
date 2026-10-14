@@ -1,1 +1,1 @@
-Shares live status (what's counting right now and today's totals) with the new TimeLock Deck Stream Deck plugin.
+New app icon: the same hourglass as the menu bar, in TimeLock blue.

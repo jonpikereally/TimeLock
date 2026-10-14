@@ -19,6 +19,8 @@ SWIFT
 CACHE="${TMPDIR:-/tmp}/timelock-modcache"
 mkdir -p "$CACHE" TimeLock.app/Contents/MacOS
 cp Resources/Info.plist TimeLock.app/Contents/Info.plist
+mkdir -p TimeLock.app/Contents/Resources
+cp Resources/AppIcon.icns TimeLock.app/Contents/Resources/AppIcon.icns
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" TimeLock.app/Contents/Info.plist
 swiftc -O -module-cache-path "$CACHE" -o TimeLock.app/Contents/MacOS/TimeLock Sources/TimeLock/*.swift
 codesign --force --sign - TimeLock.app

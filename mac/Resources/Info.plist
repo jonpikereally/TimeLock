@@ -6,6 +6,8 @@
 	<string>TimeLock</string>
 	<key>CFBundleExecutable</key>
 	<string>TimeLock</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.jonpike.timelock</string>
 	<key>CFBundleName</key>

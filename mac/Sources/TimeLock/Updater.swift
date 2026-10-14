@@ -242,6 +242,7 @@ final class Updater {
     fi
     /usr/bin/xattr -dr com.apple.quarantine "$DEST" 2>/dev/null
     /usr/bin/codesign --force --sign - "$DEST" 2>/dev/null
+    touch "$DEST"
     /usr/bin/open "$DEST"
     """
 }
