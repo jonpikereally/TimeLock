@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0",
+  "version": "1.3.0",
   "url": "TimeLock.zip",
-  "notes": "You now choose which limits show the ticking clock: tick \"Show ticking clock\" on a limit in Settings (it's off until you do). The clock can also be dragged anywhere on the page; each site remembers the spot, and double-clicking sends it back to the top-right corner."
+  "notes": "Every site in the Today list (and the site you're on) now has a \"Show timer\" button. Sites with a limit get a countdown; sites without one get a clock counting up your time there today. The popup now always shows the site you're on, which was missing in Brave."
 }
