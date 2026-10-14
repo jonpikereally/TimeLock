@@ -4,7 +4,7 @@ name: Release extension
 on:
   push:
     branches: [main]
-    paths: [manifest.json, RELEASE_NOTES.txt]
+    paths: [VERSION, manifest.json, RELEASE_NOTES.txt]
   workflow_dispatch:
 permissions:
   contents: write

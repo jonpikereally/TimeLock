@@ -6,6 +6,8 @@
 set -e
 cd "$(dirname "$0")"
 VERSION=$(cat VERSION)
+# The extension, Mac app and Stream Deck plugin always share one version.
+../scripts/check-versions.sh
 # Every error code used in the app and installer must be on the public error list.
 missing=$(grep -ohE 'TL-[0-9]{3}' Sources/TimeLock/*.swift release.sh | sort -u | while read -r c; do
   grep -q "^| \`$c\` |" ../ERRORS.md || echo "$c"

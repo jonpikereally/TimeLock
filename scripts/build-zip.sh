@@ -4,6 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ./scripts/check-errors.sh
+./scripts/check-versions.sh
 version=$(python3 -c 'import json;print(json.load(open("manifest.json"))["version"])')
 notes=$(cat RELEASE_NOTES.txt 2>/dev/null || true)
 stage=$(mktemp -d)
