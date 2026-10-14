@@ -33,6 +33,17 @@ setInterval(checkProcess, 5000);
 let snap = data.snapshot();
 let loggedProblems = new Set();
 
+// Cycling Time Today keys redraw 4× a second so their progress bar fills
+// smoothly; everything else redraws once a second with fresh data.
+const CYCLE_FRAME_MS = 250;
+setInterval(() => {
+  for (const [context, entry] of contexts) {
+    if (short(entry.action) === "time" && entry.settings.name === CYCLE && !entry.problem) {
+      renderCycle(context, entry, entry.settings, entry.settings.kind === "site" ? "site" : "app");
+    }
+  }
+}, CYCLE_FRAME_MS);
+
 setInterval(() => {
   if (!contexts.size) return;
   snap = data.snapshot(Date.now(), data.DIR, processRunning);
@@ -198,9 +209,10 @@ function renderCycle(context, entry, settings, kind, advance = false) {
   }
   const c = entry.cycle || (entry.cycle = { name: null, at: 0 });
   const every = (Number(settings.cycleSecs) || 5) * 1000;
+  const now = Date.now(); // not snap.now: the progress bar redraws between data reads
   let i = list.findIndex(([n]) => n === c.name);
-  if (i < 0) { i = 0; c.at = snap.now; }
-  else if (advance || snap.now - c.at >= every) { i = (i + 1) % list.length; c.at = snap.now; }
+  if (i < 0) { i = 0; c.at = now; }
+  else if (advance || now - c.at >= every) { i = (i + 1) % list.length; c.at = now; }
   c.name = list[i][0];
   const live = kind === "app" && snap.front === c.name;
   const g = goalLook(kind, c.name, list[i][1], live);
@@ -209,6 +221,8 @@ function renderCycle(context, entry, settings, kind, advance = false) {
     big: t(settings, "duration", list[i][1]),
     bottom: [`${i + 1}/${list.length}`, live ? "● now" : "", g.text].filter(Boolean).join(" · "),
     color: g.color,
+    // Fills up until the next item; hidden when there's only one.
+    progress: list.length > 1 ? (now - c.at) / every : null,
   }));
 }
 

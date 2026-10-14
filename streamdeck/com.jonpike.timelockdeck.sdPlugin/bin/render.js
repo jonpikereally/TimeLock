@@ -49,13 +49,17 @@ ${lock ? lockIcon(72, 44, color) : `<text x="72" y="54" text-anchor="middle" ${F
 }
 
 /// Plain text: a label on top, a big value, a line underneath.
-function text({ top = "", big = "", bottom = "", color = COLORS.text, sub = "" }) {
+/// `progress` (0–1) draws a thin bar along the bottom edge: how long until
+/// a cycling key moves on to the next item.
+function text({ top = "", big = "", bottom = "", color = COLORS.text, sub = "", progress = null }) {
   const bigSize = fit(big, 128, 34);
   return frame(`
 <text x="72" y="34" text-anchor="middle" ${FONT} font-size="${fit(top, 128, 16)}" fill="${COLORS.muted}">${esc(top)}</text>
 <text x="72" y="${sub ? 80 : 86}" text-anchor="middle" ${FONT} font-size="${bigSize}" font-weight="700" fill="${color}">${esc(big)}</text>
 ${sub ? `<text x="72" y="104" text-anchor="middle" ${FONT} font-size="${fit(sub, 128, 15)}" fill="${COLORS.muted}">${esc(sub)}</text>` : ""}
-<text x="72" y="128" text-anchor="middle" ${FONT} font-size="${fit(bottom, 128, 15)}" fill="${COLORS.muted}">${esc(bottom)}</text>`);
+<text x="72" y="${progress == null ? 128 : 124}" text-anchor="middle" ${FONT} font-size="${fit(bottom, 128, 15)}" fill="${COLORS.muted}">${esc(bottom)}</text>
+${progress == null ? "" : `<rect x="16" y="132" width="112" height="7" rx="3.5" fill="${COLORS.track}"/>
+<rect x="16" y="132" width="${(112 * Math.max(0, Math.min(1, progress))).toFixed(1)}" height="7" rx="3.5" fill="#d4dae4"/>`}`);
 }
 
 /// A problem key: the error code is always shown (see ERRORS.md).

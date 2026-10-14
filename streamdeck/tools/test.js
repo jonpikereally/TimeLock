@@ -155,6 +155,11 @@ setTimeout(() => {
     const sites = byCtx("ctx15").filter((v) => typeof v === "string").map(decodeURIComponent);
     assert.ok(sites[0].includes(">youtube.com<") && sites[0].includes(">1/5<"), "site cycle starts on the top site");
     assert.ok(sites.some((x) => x.includes(">github.com<") && x.includes(">2/5<")), "site cycle advanced on its own after 2 s");
+    // Progress bar along the bottom: grows while an item is showing, resets on the next.
+    const widths = sites.map((x) => Number((x.match(/<rect x="16" y="132" width="([\d.]+)" height="7" rx="3.5" fill="#d4dae4"/) || [])[1]));
+    assert.ok(widths.every((w) => w >= 0 && w <= 112) && widths.length >= 8, `progress bar drawn every frame (${widths.length} frames)`);
+    const firstItem = sites.findIndex((x) => x.includes(">2/5<"));
+    assert.ok(widths[firstItem - 1] > 60 && widths[firstItem] < 30, "bar was nearly full just before the switch and restarted after it");
     console.log("PASS fake Stream Deck run");
   }
   const html = `<!doctype html><meta charset="utf-8"><title>TimeLock Deck keys</title><body style="background:#000;color:#ccc;font:13px sans-serif">
