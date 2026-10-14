@@ -1,1 +1,1 @@
-{"version": "1.0.0", "url": "TimeLock-Mac.zip", "notes": "First release: tracks time in your Mac apps and shares it with the TimeLock browser extension."}
+{"version": "1.1.0", "url": "TimeLock-Mac.zip", "notes": "Media now counts: VLC, Spotify, QuickTime, Music, Podcasts, TV, IINA and other media players count while they play, even in the background (marked \u266a in the menu), and playing media keeps the app in front counting while you're away. DAWs and audio-interface software, which keep audio running all day, don't count unless they're in front and you're using them."}
