@@ -1,5 +1,5 @@
 {
-  "version": "2.0.1",
+  "version": "2.1.0",
   "url": "TimeLock.zip",
-  "notes": "Fix: time no longer keeps counting when the browser is in the background behind another app (macOS kept reporting the window as focused). Adds a one-time restore for data from the extension's previous ID."
+  "notes": "Goals: set a daily minimum and/or maximum for any app or website in Settings \u2192 Goals. Times turn blue below your minimum, green once it's met, amber near your maximum and red past it, in the popup, the on-page clock, the Mac menu and on the Stream Deck. Goals never lock anything. Also: the Add button stays grey until you type minutes."
 }
