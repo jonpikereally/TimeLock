@@ -27,6 +27,7 @@ export const ERRORS = {
   "TL-501": ["That isn't a website address TimeLock understands.", "Type plain domains like youtube.com, separated by commas."],
   "TL-502": ["That daily limit isn't valid.", "Use a whole number of minutes between 0 and 1440. 0 blocks the site all day."],
   "TL-503": ["Couldn't save your settings.", "Try again. If it repeats, copy the details."],
+  "TL-601": ["Couldn't talk to the TimeLock Mac app.", "Open TimeLock from your Applications folder once (it re-registers itself), then click Check connection in Settings."],
   "TL-999": ["Something unexpected went wrong.", "Copy the details and paste them into an AI assistant along with the error list link."],
 };
 

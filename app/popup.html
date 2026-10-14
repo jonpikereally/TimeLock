@@ -19,8 +19,12 @@
     <div id="now"></div>
     <h2>Daily limits</h2>
     <div id="limits"></div>
-    <h2 class="row"><span class="grow">Today</span><span id="total"></span></h2>
+    <h2 class="row"><span class="grow">Today in the browser</span><span id="total"></span></h2>
     <div class="card"><ul class="sites" id="sites"></ul></div>
+    <div id="apps-section" class="hidden">
+      <h2 class="row"><span class="grow">Today on your Mac</span><span id="apps-total"></span></h2>
+      <div class="card"><ul class="sites" id="apps"></ul></div>
+    </div>
   </section>
 
   <section id="settings" class="hidden">
@@ -43,6 +47,9 @@
       <div class="row" style="margin-top:10px"><span class="grow muted small" id="save-msg"></span><button class="btn primary" id="save">Save</button></div>
     </div>
 
+    <h2>Mac app</h2>
+    <div class="card" id="mac-card"></div>
+
     <h2>Updates</h2>
     <div class="card">
       <div class="row"><span class="grow">Version <b id="version"></b></span><button class="btn small" id="check-updates">Check for Updates…</button></div>
@@ -53,6 +60,7 @@
     </div>
   </section>
 </main>
+<datalist id="known-apps"></datalist>
 <script type="module" src="popup.js"></script>
 </body>
 </html>

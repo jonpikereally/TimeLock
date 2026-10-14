@@ -2,6 +2,8 @@ import { $, esc, send, errorBox, fmtTime, VERSION } from "./ui.js";
 import { fmtDuration, hostMatches, isTightening, cleanDomain, hostOf, clockOn, setClock, newer } from "../src/shared/core.js";
 import { REPO, ERROR_LIST_URL } from "../src/shared/errors.js";
 
+const MAC_DOWNLOAD = `https://github.com/${REPO}/raw/main/updates/mac/TimeLock-Mac.zip`;
+
 let state;
 let draft; // settings being edited in the Settings view
 
@@ -48,6 +50,8 @@ function statusLine(r, st) {
   return [`${fmtDuration(st.left)} left`, st.left <= 300 ? "warn" : ""];
 }
 
+const whatItCovers = (r) => [...r.domains, ...(r.apps || []).map((a) => `${a} (app)`)].join(", ");
+
 function ruleCard(r, st) {
   const pct = st.limit ? Math.min(100, (st.used / st.limit) * 100) : 100;
   const [text, cls] = statusLine(r, st);
@@ -56,7 +60,7 @@ function ruleCard(r, st) {
   el.innerHTML = `
     <div class="row"><b class="grow ellipsis">${esc(r.name)}</b><span class="pill ${cls}">${esc(text)}</span></div>
     <div class="bar ${st.over ? "bad" : st.left <= 300 ? "warn" : ""}"><i style="width:${pct}%"></i></div>
-    <div class="row small muted"><span class="grow ellipsis" title="${esc(r.domains.join(", "))}">${esc(r.domains.join(", "))}</span>
+    <div class="row small muted"><span class="grow ellipsis" title="${esc(whatItCovers(r))}">${esc(whatItCovers(r))}</span>
       <span>${fmtDuration(st.used)} of ${fmtDuration(st.limit)}</span>
       ${st.unlocked ? '<button class="btn small relock">Lock again</button>' : ""}</div>`;
   const relock = $(".relock", el);
@@ -129,6 +133,13 @@ function renderHome() {
   if (!settings.rules.length) limits.innerHTML = `<div class="card empty">No limits yet. Add one above or in ⚙︎ Settings.</div>`;
   for (const r of settings.rules) limits.append(ruleCard(r, byId[r.id]));
 
+  // Mac app time, when the TimeLock Mac app is connected.
+  const appRows = Object.entries(state.apps || {}).sort((a, b) => b[1] - a[1]);
+  $("#apps-section").classList.toggle("hidden", !appRows.length);
+  $("#apps-total").textContent = fmtDuration(appRows.reduce((t, [, s]) => t + s, 0));
+  $("#apps").innerHTML = appRows.slice(0, 15)
+    .map(([a, s]) => `<li><span class="grow ellipsis">${esc(a)}</span><span class="t">${fmtDuration(s)}</span></li>`).join("");
+
   const rows = Object.entries(usage).sort((a, b) => b[1] - a[1]);
   const total = rows.reduce((t, [, s]) => t + s, 0);
   $("#total").textContent = fmtDuration(total);
@@ -152,6 +163,7 @@ function openSettings() {
   $("#toggle").title = "Back";
   draft = structuredClone(state.settings);
   renderPassword();
+  renderMac();
   renderRuleEditor();
   $("#reset-hour").value = draft.resetHour;
   $("#warnings").checked = draft.warnings;
@@ -199,6 +211,33 @@ function renderPassword() {
   };
 }
 
+function renderMac() {
+  const m = state.mac;
+  const card = $("#mac-card");
+  let status;
+  if (m && m.connected) {
+    status = `<b>✓ Connected</b> to TimeLock for Mac v${esc(m.version)}${m.running ? "" : " — <b>but the app isn't running</b>, so app time isn't being tracked. Open TimeLock from your Applications folder."}`;
+  } else if (m && m.installed && m.error) {
+    status = "";
+  } else {
+    status = `Not installed. The TimeLock Mac app tracks time in your Mac apps, shows it here, and lets a limit include apps (e.g. "Social: x.com + the Discord app"). Apps are tracked, never locked. <a href="${MAC_DOWNLOAD}" target="_blank">Download TimeLock for Mac</a>, unzip it and run <b>Install TimeLock.command</b>.`;
+  }
+  card.innerHTML = `<p class="small" style="margin-top:0">${status}</p><div id="mac-err"></div>
+    <div class="row"><span class="grow small muted">${m && m.at ? `Last checked ${fmtTime(m.at)}` : ""}</span><button class="btn small" id="mac-check">Check connection</button></div>`;
+  if (m && m.error) $("#mac-err").append(errorBox(m.error, { compact: true }));
+  $("#mac-check").onclick = async (e) => {
+    e.target.textContent = "Checking…";
+    try {
+      state.mac = await send("macRefresh");
+    } catch (err) {
+      state.mac = { installed: true, error: err };
+    }
+    renderMac();
+  };
+  const known = new Set([...(m && m.known) || [], ...Object.keys(state.apps || {})]);
+  $("#known-apps").innerHTML = [...known].sort().map((a) => `<option value="${esc(a)}">`).join("");
+}
+
 function renderRuleEditor() {
   const box = $("#rules-edit");
   box.replaceChildren();
@@ -211,10 +250,12 @@ function renderRuleEditor() {
       <button class="btn icon del" title="Remove this limit">🗑</button>
       <input class="domains" placeholder="youtube.com, reddit.com" value="${esc(r.domains.join(", "))}">
       <span class="small muted">min/day</span>
+      <input class="apps" list="known-apps" placeholder="Mac apps (optional), e.g. Discord, Messages" value="${esc((r.apps || []).join(", "))}" title="App time counts toward this limit (needs the TimeLock Mac app). Apps are never locked; when the limit runs out, the sites lock.">
       <label class="row small clock-opt"><input type="checkbox" class="clock" ${r.domains.length && r.domains.every((d) => clockOn(draft.clockSites, d)) ? "checked" : ""}> Show ticking clock on these sites</label>`;
     $(".name", el).oninput = (e) => { r.name = e.target.value; };
     $(".limit", el).oninput = (e) => { r.limit = e.target.value === "" ? NaN : Number(e.target.value); updateSaveState(); };
     $(".domains", el).oninput = (e) => { r.domains = e.target.value.split(/[,\s]+/).filter(Boolean); updateSaveState(); };
+    $(".apps", el).oninput = (e) => { r.apps = e.target.value.split(",").map((a) => a.trim()).filter(Boolean); updateSaveState(); };
     $(".clock", el).onchange = (e) => {
       for (const d of r.domains.map(cleanDomain).filter(Boolean)) draft.clockSites = setClock(draft.clockSites, d, e.target.checked);
     };
@@ -224,7 +265,7 @@ function renderRuleEditor() {
 }
 
 function normalized() {
-  return { ...draft, rules: draft.rules.map((r) => ({ ...r, domains: r.domains.map((d) => cleanDomain(d) || d) })) };
+  return { ...draft, rules: draft.rules.map((r) => ({ ...r, domains: r.domains.map((d) => cleanDomain(d) || d), apps: r.apps || [] })) };
 }
 
 function updateSaveState() {
@@ -278,7 +319,7 @@ for (let h = 0; h < 24; h++) {
   $("#reset-hour").append(o);
 }
 $("#toggle").onclick = () => ($("#settings").classList.contains("hidden") ? openSettings() : closeSettings());
-$("#add-rule").onclick = () => { draft.rules.push({ name: "", domains: [], limit: 30 }); renderRuleEditor(); updateSaveState(); };
+$("#add-rule").onclick = () => { draft.rules.push({ name: "", domains: [], apps: [], limit: 30 }); renderRuleEditor(); updateSaveState(); };
 $("#reset-hour").onchange = updateSaveState;
 $("#warnings").onchange = updateSaveState;
 $("#update-source").oninput = updateSaveState;

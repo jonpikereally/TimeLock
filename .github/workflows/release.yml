@@ -1,4 +1,4 @@
-name: Release
+name: Release extension
 # When manifest.json's version changes on main, build the zip and update
 # updates/latest.json so every installed copy sees the new version.
 on:
@@ -8,6 +8,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: release
+  cancel-in-progress: false
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -29,5 +32,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add updates
-          git commit -m "Release v${{ steps.check.outputs.version }}"
-          git push
+          git commit -m "Release extension v${{ steps.check.outputs.version }}"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1

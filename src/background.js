@@ -70,14 +70,65 @@ async function flush() {
 }
 
 const tick = (why) =>
-  serial(flush).catch((e) => logError(e.code || "TL-999", `${why}: ${e.stack || e}`));
+  serial(flush)
+    .then(() => macSync())
+    .catch((e) => logError(e.code || "TL-999", `${why}: ${e.stack || e}`));
+
+// ---------- the TimeLock Mac app ----------
+// Chrome runs the Mac app in "connector" mode through native messaging
+// (host com.jonpike.timelock, registered by the app at launch). Each sync
+// hands it today's site time and limits and gets today's app time back, so
+// app time counts toward limits and the menu bar shows site time.
+
+const MAC_HOST = "com.jonpike.timelock";
+const MAC_EVERY = 25000;
+let lastMacSync = 0;
+
+async function macSync(force = false) {
+  const now = Date.now();
+  if (!force && now - lastMacSync < MAC_EVERY) return;
+  lastMacSync = now;
+  const s = await getSettings();
+  const { day, usage, apps, unlocks } = await today(s, now);
+  const limits = s.rules.map((r) => {
+    const st = core.ruleStatus(r, usage, unlocks, now, s.resetHour, apps);
+    return { name: r.name, domains: r.domains, apps: r.apps || [], limit: st.limit, used: st.used, locked: st.locked, unlockedUntil: st.unlockedUntil };
+  });
+  const { mac: prev } = await load("mac");
+  let mac;
+  try {
+    const res = await chrome.runtime.sendNativeMessage(MAC_HOST, {
+      type: "sync", day, resetHour: s.resetHour, sites: usage, limits, version: VERSION, at: now,
+    });
+    if (!res || !res.ok) throw new Error((res && res.error) || "empty reply");
+    await chrome.storage.local.set({ [`apps:${day}`]: res.apps || {} });
+    mac = { installed: true, connected: true, at: now, version: res.version, running: !!res.running, known: res.known || [] };
+  } catch (e) {
+    const msg = String(e && e.message || e);
+    if (/not found|forbidden/i.test(msg)) {
+      // Not installed (or installed for another extension ID): not an error.
+      mac = { installed: false, connected: false, at: now, known: (prev && prev.known) || [] };
+    } else {
+      mac = { installed: true, connected: false, at: now, error: { code: "TL-601", details: msg }, known: (prev && prev.known) || [] };
+      if (!prev || !prev.error) await logError("TL-601", msg);
+    }
+  }
+  await chrome.storage.local.set({ mac });
+  if (mac.connected) await serial(flush); // app time may have just locked something
+}
 
 // ---------- enforcing limits ----------
 
-async function enforce(s, host, now) {
+// Today's site time, Mac app time and temporary unlocks.
+async function today(s, now) {
   const day = core.dayKey(now, s.resetHour);
-  const { [`usage:${day}`]: usage = {}, unlocks = {}, warned = {} } = await load([`usage:${day}`, "unlocks", "warned"]);
-  const statuses = s.rules.map((r) => [r, core.ruleStatus(r, usage, unlocks, now, s.resetHour)]);
+  const got = await load([`usage:${day}`, `apps:${day}`, "unlocks", "warned"]);
+  return { day, usage: got[`usage:${day}`] || {}, apps: got[`apps:${day}`] || {}, unlocks: got.unlocks || {}, warned: got.warned || {} };
+}
+
+async function enforce(s, host, now) {
+  const { day, usage, apps, unlocks, warned } = await today(s, now);
+  const statuses = s.rules.map((r) => [r, core.ruleStatus(r, usage, unlocks, now, s.resetHour, apps)]);
   const locked = statuses.filter(([, st]) => st.locked).map(([r]) => r);
 
   await applyBlockRules(locked);
@@ -125,7 +176,8 @@ async function enforce(s, host, now) {
 // declarativeNetRequest sends any page load on a locked domain to the lock
 // screen before it even starts, with the original URL after the #.
 async function applyBlockRules(locked) {
-  const want = locked.map((r, i) => ({
+  // A limit made only of Mac apps has no sites to block.
+  const want = locked.filter((r) => r.domains.length).map((r, i) => ({
     id: i + 1,
     priority: 1,
     condition: { requestDomains: r.domains, resourceTypes: ["main_frame"], regexFilter: "^(https?://.*)$" },
@@ -155,7 +207,7 @@ async function redirectOpenTabs(locked) {
 async function pruneOldDays() {
   const all = await chrome.storage.local.get(null);
   const cutoff = core.dayKey(Date.now() - KEEP_DAYS * 864e5);
-  const old = Object.keys(all).filter((k) => k.startsWith("usage:") && k.slice(6) < cutoff);
+  const old = Object.keys(all).filter((k) => /^(usage|apps):/.test(k) && k.split(":")[1] < cutoff);
   if (old.length) await chrome.storage.local.remove(old);
 }
 
@@ -184,11 +236,11 @@ async function verify(password) {
 const handlers = {
   async state({ host }) {
     await serial(flush);
+    await macSync().catch(() => {});
     const s = await getSettings();
     const now = Date.now();
-    const day = core.dayKey(now, s.resetHour);
-    const { [`usage:${day}`]: usage = {}, unlocks = {}, pw, update, errors = [], errorsSeenAt = 0 } =
-      await load([`usage:${day}`, "unlocks", "pw", "update", "errors", "errorsSeenAt"]);
+    const { day, usage, apps, unlocks } = await today(s, now);
+    const { pw, update, errors = [], errorsSeenAt = 0, mac = null } = await load(["pw", "update", "errors", "errorsSeenAt", "mac"]);
     return {
       version: VERSION,
       now,
@@ -196,7 +248,9 @@ const handlers = {
       settings: s,
       hasPassword: !!pw,
       usage,
-      statuses: s.rules.map((r) => core.ruleStatus(r, usage, unlocks, now, s.resetHour)),
+      apps,
+      mac,
+      statuses: s.rules.map((r) => core.ruleStatus(r, usage, unlocks, now, s.resetHour, apps)),
       host: host || (await frontHost()),
       update,
       errors: errors.filter((e) => e.t > errorsSeenAt),
@@ -211,10 +265,9 @@ const handlers = {
     const s = await getSettings();
     if (!host || !core.clockOn(s.clockSites, host)) return null;
     const now = Date.now();
-    const day = core.dayKey(now, s.resetHour);
-    const { [`usage:${day}`]: usage = {}, unlocks = {} } = await load([`usage:${day}`, "unlocks"]);
+    const { usage, apps, unlocks } = await today(s, now);
     const mine = core.ruleFor(s.rules, host)
-      .map((r) => [r, core.ruleStatus(r, usage, unlocks, now, s.resetHour)])
+      .map((r) => [r, core.ruleStatus(r, usage, unlocks, now, s.resetHour, apps)])
       .sort((a, b) => a[1].left - b[1].left);
     // No limit on this site: the clock counts up the time spent today instead.
     if (!mine.length) {
@@ -244,6 +297,12 @@ const handlers = {
     if (!sender.tab) return;
     await chrome.storage.session.set({ [`media:${sender.tab.id}`]: !!playing });
     tick("media");
+  },
+
+  async macRefresh() {
+    await macSync(true);
+    const { mac = null } = await load("mac");
+    return mac;
   },
 
   async logError({ code, details }) {

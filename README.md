@@ -2,6 +2,8 @@
 
 A Chrome extension that tracks how long you spend on each website and, once you hit a daily limit, locks you out of the sites you chose for the rest of the day. Your password gets you back in early.
 
+The optional **TimeLock for Mac** menu bar app tracks your time in Mac apps too. The two are connected: app time shows in the extension, a limit can mix sites and apps ("Social: x.com, reddit.com and the Discord app, 30 min shared"), and the menu bar shows your website time and limits. Apps are only tracked, never locked: when a shared limit runs out, its websites lock.
+
 - **Tracks** the site in front of you, only while Chrome is focused. If you step away (no keyboard or mouse for 60 s) it stops counting, unless a video or audio is playing in that tab (muted videos included), so watching still counts. The on-page clock pauses at the same moment.
 - **Limits** cover one or more sites that share one daily budget (e.g. "Social: reddit.com, x.com, instagram.com — 30 min"). Subdomains are included. 0 minutes blocks the sites all day.
 - **Locking:** when you run out, every open tab on those sites switches to a lock screen, and new visits are blocked before the page loads. You get a heads-up notification at 5 and 1 minutes left, and on the sites you pick, a small ticking clock in the corner of the page counts down the time you have left, or counts up your time today on sites with no limit (click **Show timer** next to a site in the popup; drag it anywhere, each site remembers the spot, and double-click resets it). The toolbar badge shows the same.
@@ -17,6 +19,16 @@ A Chrome extension that tracks how long you spend on each website and, once you 
 4. **Close the loopholes:** in `chrome://extensions` → TimeLock → Details, turn on **Allow in Incognito**, otherwise an incognito window gets around every limit.
 
 Works in Chrome, Brave and Edge (version 120 or newer).
+
+## TimeLock for Mac
+
+1. Download [TimeLock-Mac.zip](https://github.com/jonpikereally/TimeLock/raw/main/updates/mac/TimeLock-Mac.zip), unzip it, and double-click **Install TimeLock.command** (if macOS blocks it: right-click → Open → Open).
+2. Look for the hourglass in the menu bar. It needs no permissions and turns on Open at Login (switch that off in its menu).
+3. Reload the extension in `chrome://extensions` once. Its Settings → **Mac app** card should say *Connected*.
+
+It counts the app in front, pauses after a minute with no mouse or keyboard input unless that app is playing video (it checks whether the app is keeping the display awake, which video players do), and stops while the screen is locked. Data stays in `~/Library/Application Support/TimeLock`. It updates itself from this repo ("Check for Updates…" in its menu).
+
+**How they talk:** the app registers itself with Chrome, Brave, Edge, Chromium and Vivaldi as a [native messaging](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging) host. Every 30 seconds the browser runs it briefly to swap today's numbers. Nothing listens on the network.
 
 ## What it can't stop
 

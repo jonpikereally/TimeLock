@@ -60,17 +60,20 @@ export function setClock(clockSites, host, on) {
   return list;
 }
 
-export function ruleSeconds(rule, usage) {
+// Time on a limit's sites plus time in its Mac apps (reported by the
+// TimeLock Mac app; app names match exactly).
+export function ruleSeconds(rule, usage, apps) {
   let s = 0;
   for (const [host, secs] of Object.entries(usage || {})) {
     if (rule.domains.some((d) => hostMatches(host, d))) s += secs;
   }
+  for (const name of rule.apps || []) s += (apps && apps[name]) || 0;
   return s;
 }
 
 // Everything the UI and the blocker need to know about one rule right now.
-export function ruleStatus(rule, usage, unlocks, now, resetHour) {
-  const used = ruleSeconds(rule, usage);
+export function ruleStatus(rule, usage, unlocks, now, resetHour, apps) {
+  const used = ruleSeconds(rule, usage, apps);
   const limit = rule.limit * 60;
   const unlockedUntil = (unlocks && unlocks[rule.id]) || 0;
   const over = used >= limit;
@@ -97,16 +100,19 @@ export function isTightening(oldS, newS) {
     const n = (newS.rules || []).find((r) => r.id === o.id);
     if (!n || n.limit > o.limit) return false;
     if (!o.domains.every((d) => n.domains.includes(d))) return false;
+    if (!(o.apps || []).every((a) => (n.apps || []).includes(a))) return false;
   }
   return true;
 }
 
 export function validateRule(r) {
   const domains = [...new Set((r.domains || []).map(cleanDomain))];
-  if (!domains.length || domains.includes(null)) return { error: "TL-501" };
+  const apps = [...new Set((r.apps || []).map((a) => String(a).trim()).filter(Boolean))];
+  if (domains.includes(null) || apps.some((a) => a.length > 80)) return { error: "TL-501" };
+  if (!domains.length && !apps.length) return { error: "TL-501" };
   const limit = Number(r.limit);
   if (!Number.isFinite(limit) || limit < 0 || limit > 24 * 60 || Math.round(limit) !== limit) return { error: "TL-502" };
-  return { rule: { id: r.id, name: String(r.name || "").trim() || domains[0], domains, limit } };
+  return { rule: { id: r.id, name: String(r.name || "").trim() || domains[0] || apps[0], domains, apps, limit } };
 }
 
 export function fmtDuration(secs) {

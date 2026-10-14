@@ -1,0 +1,1 @@
+First release: tracks time in your Mac apps and shares it with the TimeLock browser extension.

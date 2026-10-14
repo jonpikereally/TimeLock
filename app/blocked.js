@@ -27,7 +27,7 @@ async function load() {
   $("#sub").textContent = `It unlocks at ${fmtTime(status.resetsAt)}.`;
   $("#detail").textContent = rule.limit === 0
     ? `"${rule.name}" is blocked all day.`
-    : `You've used ${fmtDuration(status.used)} of your ${fmtDuration(status.limit)} daily limit for "${rule.name}" (${rule.domains.join(", ")}).`;
+    : `You've used ${fmtDuration(status.used)} of your ${fmtDuration(status.limit)} daily limit for "${rule.name}" (${[...rule.domains, ...(rule.apps || []).map((a) => `${a} app`)].join(", ")}).`;
   $("#url").textContent = target;
   if (!state.hasPassword) $("#unlock-box").classList.add("hidden");
 }

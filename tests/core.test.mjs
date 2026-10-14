@@ -36,6 +36,15 @@ assert.ok(st.locked, "an expired unlock locks again");
 st = c.ruleStatus({ ...rule, limit: 0 }, {}, {}, now, 0);
 assert.ok(st.locked, "0 minutes blocks immediately");
 
+// Mac apps count toward a limit
+const mixed = { id: "m", name: "Social", domains: ["x.com"], apps: ["X", "Discord"], limit: 10 };
+assert.equal(c.ruleSeconds(mixed, { "x.com": 120 }, { X: 300, Discord: 60, Safari: 999 }), 480);
+assert.equal(c.ruleSeconds(mixed, { "x.com": 120 }), 120, "no app data yet");
+assert.ok(c.ruleStatus({ ...mixed, limit: 8 }, { "x.com": 120 }, {}, now, 0, { X: 400 }).locked);
+assert.ok(!c.isTightening({ rules: [mixed] }, { rules: [{ ...mixed, apps: ["X"] }] }), "dropping an app loosens");
+assert.ok(c.isTightening({ rules: [mixed] }, { rules: [{ ...mixed, apps: ["X", "Discord", "Slack"] }] }));
+assert.deepEqual(c.validateRule({ domains: [], apps: [" Discord ", "Discord"], limit: 5 }).rule, { id: undefined, name: "Discord", domains: [], apps: ["Discord"], limit: 5 });
+
 // tightening vs loosening
 const old = { resetHour: 0, rules: [rule] };
 assert.ok(c.isTightening(old, { resetHour: 0, rules: [{ ...rule, limit: 20 }] }));

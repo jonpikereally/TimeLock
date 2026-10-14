@@ -9,20 +9,23 @@
 <iframe id="blocked" width="700" height="640"></iframe>
 <script type="module">
 import * as core from "/src/shared/core.js";
+const q = new URLSearchParams(location.search);
 const now = Date.now();
 const settings = { resetHour: 0, warnings: true, updateSource: "", clockSites: ["youtube.com", "github.com"], rules: [
-  { id: "a", name: "Social", domains: ["reddit.com", "x.com"], limit: 30 },
+  { id: "a", name: "Social", domains: ["reddit.com", "x.com"], apps: ["Discord"], limit: 30 },
   { id: "b", name: "youtube.com", domains: ["youtube.com"], limit: 60 },
   { id: "c", name: "News", domains: ["cnn.com"], limit: 20 },
 ] };
 const usage = { "youtube.com": 2840, "reddit.com": 1500, "old.reddit.com": 320, "github.com": 4100, "cnn.com": 600, "mail.google.com": 900 };
+const apps = q.has("nomac") ? {} : { "Visual Studio Code": 5400, "Brave Browser": 4200, Discord: 900, Messages: 300 };
+const mac = q.has("nomac") ? { installed: false, at: now } : { installed: true, connected: true, running: true, version: "1.0.0", at: now, known: ["Discord", "Messages", "Slack", "Visual Studio Code"] };
 const unlocks = { c: now + 12 * 60000 };
 let hasPassword = !location.search.includes("nopw");
 const PW = "test";
 const fail = (code, details) => ({ ok: false, error: { code, details } });
 const handlers = {
-  state: ({ host }) => ({ version: "1.0.0", now, settings, hasPassword, usage, host: host || "youtube.com",
-    statuses: settings.rules.map((r) => core.ruleStatus(r, usage, unlocks, now, settings.resetHour)),
+  state: ({ host }) => ({ version: "1.0.0", now, settings, hasPassword, usage, apps, mac, host: host || "youtube.com",
+    statuses: settings.rules.map((r) => core.ruleStatus(r, usage, unlocks, now, settings.resetHour, apps)),
     update: { available: true, current: "1.0.0", latest: "1.1.0", notes: "Weekly report.", url: "https://example.com/TimeLock.zip" },
     errors: [{ code: "TL-302", details: "Example error for the harness", t: now }] }),
   unlock: ({ password, ruleId, minutes }) => password === PW ? (unlocks[ruleId] = now + 9e5, { until: 0 }) : fail("TL-401"),
@@ -33,6 +36,7 @@ const handlers = {
     Object.assign(settings, s, { rules: s.rules.map((r) => ({ ...core.validateRule(r).rule, id: r.id || Math.random().toString(36) })) });
   },
   setClock: ({ host, on }) => (settings.clockSites = core.setClock(settings.clockSites, host, on)),
+  macRefresh: () => mac,
   checkUpdates: () => ({ checkedAt: now, current: "1.0.0", latest: "1.0.0", available: false }),
   dismissErrors: () => {}, relockNow: ({ ruleId }) => { delete unlocks[ruleId]; },
 };

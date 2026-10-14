@@ -1,0 +1,59 @@
+name: Release Mac app
+# When mac/VERSION goes up on main, build the universal app on a Mac and commit
+# updates/mac/TimeLock-Mac.zip + latest.json, which ships it to every installed
+# copy's "Check for Updates". Same pattern as PasteStack and Curtain.
+on:
+  push:
+    branches: [main]
+    paths: [mac/**]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare versions
+        id: version
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          new = open("mac/VERSION").read().strip()
+          try:
+              old = json.load(open("updates/mac/latest.json"))["version"]
+          except (OSError, ValueError, KeyError):
+              old = "0"
+          key = lambda v: [int(x) if x.isdigit() else 0 for x in v.split(".")]
+          a, b = key(new), key(old)
+          n = max(len(a), len(b))
+          print(f"version={new}")
+          print(f"published={old}")
+          print(f"ship={'true' if a + [0] * (n - len(a)) > b + [0] * (n - len(b)) else 'false'}")
+          PY
+          cat "$GITHUB_OUTPUT"
+      - name: Universal release build (arm64 + x86_64)
+        run: ./mac/release.sh
+      - name: Check the bundle
+        run: |
+          unzip -q -o updates/mac/TimeLock-Mac.zip -d "$RUNNER_TEMP/release"
+          lipo -info "$RUNNER_TEMP/release/TimeLock/TimeLock.app/Contents/MacOS/TimeLock"
+          python3 -c 'import json; print(json.load(open("updates/mac/latest.json")))'
+      - name: Ship it
+        if: steps.version.outputs.ship == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add updates/mac
+          git commit -m "Release Mac app v${{ steps.version.outputs.version }}"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1
+      - name: Nothing to ship
+        if: steps.version.outputs.ship != 'true'
+        run: echo "Mac app is v${{ steps.version.outputs.version }}, already published v${{ steps.version.outputs.published }}."
