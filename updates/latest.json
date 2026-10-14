@@ -1,5 +1,5 @@
 {
-  "version": "1.3.0",
+  "version": "1.3.1",
   "url": "TimeLock.zip",
-  "notes": "Every site in the Today list (and the site you're on) now has a \"Show timer\" button. Sites with a limit get a countdown; sites without one get a clock counting up your time there today. The popup now always shows the site you're on, which was missing in Brave."
+  "notes": "If TimeLock's files are updated without reloading the extension, you now get error TL-103 telling you to click \u21bb in the extensions page, instead of the catch-all TL-999."
 }
