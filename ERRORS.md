@@ -10,6 +10,7 @@ Codes are grouped: `1xx` updates, `2xx` time tracking, `3xx` blocking, `4xx` pas
 |---|---|---|
 | `TL-101` | TimeLock couldn't reach the update feed. | Check your internet connection. If you set a custom Update source in Settings, make sure the URL is right, or clear it. |
 | `TL-102` | The update feed answered, but not with a valid `latest.json`. | Clear the Update source in Settings to go back to the built-in GitHub feed. If you're already on it, open an issue. |
+| `TL-103` | TimeLock's files were updated, but the part running in the background is still the old version, so it didn't understand a request from the new popup or page. | Open `chrome://extensions` (`brave://extensions` in Brave) and click ↻ on TimeLock. Then refresh open tabs and reopen the popup. |
 | `TL-201` | Saving the time you spent on a site failed, usually because the disk is full. | Free some disk space. If it keeps happening, copy the details and open an issue. |
 | `TL-202` | TimeLock couldn't read its saved time or settings. | Restart Chrome. If it persists, copy the details and open an issue. |
 | `TL-203` | The countdown clock in the corner of a limited site couldn't get its time from TimeLock. Tracking and locking are unaffected. | Reload the page. If it keeps happening, copy the details and open an issue. |

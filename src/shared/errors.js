@@ -12,6 +12,7 @@ export const ERROR_HOVER = `Look this code up on the TimeLock error list: ${ERRO
 export const ERRORS = {
   "TL-101": ["Couldn't reach the update feed.", "Check your internet connection, or the Update source in Settings."],
   "TL-102": ["The update feed returned something unreadable.", "Clear the Update source in Settings to go back to the built-in feed."],
+  "TL-103": ["TimeLock was updated but hasn't been reloaded.", "Click ↻ on TimeLock in chrome://extensions (brave://extensions in Brave), then reopen this."],
   "TL-201": ["Couldn't save the time you spent on a site.", "Your disk may be full. Free some space; if it keeps happening, copy the details."],
   "TL-202": ["Couldn't read your saved time or settings.", "Restart Chrome. If it persists, copy the details."],
   "TL-203": ["The countdown clock couldn't load on a page.", "Reload the page. Time is still tracked and limits still apply."],

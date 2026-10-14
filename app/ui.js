@@ -13,7 +13,9 @@ export async function send(type, data = {}) {
   } catch (e) {
     throw Object.assign(new Error(e.message), { code: "TL-999" });
   }
-  if (!res) throw Object.assign(new Error(`No reply to ${type}`), { code: "TL-999" });
+  // No reply means the background is an older copy that doesn't know this
+  // request: the files were updated but the extension wasn't reloaded.
+  if (!res) throw Object.assign(new Error(`The background doesn't handle "${type}" (no reply)`), { code: "TL-103" });
   if (!res.ok) throw Object.assign(new Error(res.error.details || res.error.code), res.error);
   return res.result;
 }

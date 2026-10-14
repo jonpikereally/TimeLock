@@ -311,7 +311,11 @@ const handlers = {
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   const h = handlers[msg && msg.type];
-  if (!h) return false;
+  if (!h) {
+    // Content scripts and pages from a newer copy may ask for things this one doesn't know.
+    reply({ ok: false, error: { code: "TL-103", details: `Unknown request "${msg && msg.type}"` } });
+    return false;
+  }
   h(msg, sender)
     .then((result) => reply({ ok: true, result }))
     .catch((e) => {

@@ -78,7 +78,7 @@ function clockButton(host) {
       // Redraw them all: turning on reddit.com also covers old.reddit.com.
       document.querySelectorAll(".clock-btn").forEach((x) => x.redraw());
     } catch (e) {
-      $("#banners").prepend(errorBox(e, { compact: true }));
+      $("#banners").prepend(errorBox(e, { onDismiss: () => {} }));
     }
   };
   b.dataset.clockHost = host;
