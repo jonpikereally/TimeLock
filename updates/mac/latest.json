@@ -1,1 +1,1 @@
-{"version": "1.3.0", "url": "TimeLock-Mac.zip", "notes": "Goals: app and website times in the menu are coloured by the goals you set in the TimeLock extension (blue below your minimum, green once it's met, amber near your maximum, red past it). Hover a time to see its goal."}
+{"version": "2.2.0", "url": "TimeLock-Mac.zip", "notes": "Version 2.2.0: TimeLock for Mac, the browser extension and the Stream Deck plugin now share one version number (this jumps from 1.3.0). No other changes."}
