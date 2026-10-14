@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "2.0.0",
   "url": "TimeLock.zip",
-  "notes": "Away detection is smarter: after a minute with no mouse or keyboard input the timer pauses unless a video is playing, and now muted videos count as playing too. The on-page clock pauses at the same moment instead of catching up later."
+  "notes": "Works with the new TimeLock for Mac app: see your app time in the popup, and add Mac apps to a limit so app time counts toward it (apps are tracked, never locked). The extension now has a fixed ID, so remove it and load it again once (your limits and history in this browser start fresh)."
 }
