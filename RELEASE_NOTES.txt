@@ -1,1 +1,1 @@
-A small ticking countdown clock now sits in the top-right corner of every site that has a limit. It turns orange at 5 minutes, red at 1 minute, green while unlocked, and fades out when your mouse comes near. Turn it off in Settings.
+You now choose which limits show the ticking clock: tick "Show ticking clock" on a limit in Settings (it's off until you do). The clock can also be dragged anywhere on the page; each site remembers the spot, and double-clicking sends it back to the top-right corner.

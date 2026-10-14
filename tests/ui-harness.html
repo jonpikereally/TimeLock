@@ -12,7 +12,7 @@ import * as core from "/src/shared/core.js";
 const now = Date.now();
 const settings = { resetHour: 0, warnings: true, updateSource: "", rules: [
   { id: "a", name: "Social", domains: ["reddit.com", "x.com"], limit: 30 },
-  { id: "b", name: "youtube.com", domains: ["youtube.com"], limit: 60 },
+  { id: "b", name: "youtube.com", domains: ["youtube.com"], limit: 60, clock: true },
   { id: "c", name: "News", domains: ["cnn.com"], limit: 20 },
 ] };
 const usage = { "youtube.com": 2840, "reddit.com": 1500, "old.reddit.com": 320, "github.com": 4100, "cnn.com": 600, "mail.google.com": 900 };

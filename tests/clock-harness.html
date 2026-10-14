@@ -8,7 +8,8 @@
 <script>
 const q = new URLSearchParams(location.search);
 const now = Date.now();
-window.chrome = { runtime: { sendMessage: async (m) => m.type === "pageStatus"
+const mem = {};
+window.chrome = { storage: { local: { get: async (k) => ({ [k]: mem[k] }), set: async (o) => Object.assign(mem, o) } }, runtime: { sendMessage: async (m) => m.type === "pageStatus"
   ? { ok: true, result: { name: "Video", domains: ["youtube.com"], left: Number(q.get("left") ?? 1834), used: 1766, limit: 3600,
       unlockedUntil: q.has("unlocked") ? now + Number(q.get("unlocked")) * 1000 : 0 } }
   : { ok: true } } };

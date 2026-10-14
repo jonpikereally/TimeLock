@@ -76,10 +76,14 @@ function renderHome() {
       add.className = "row";
       add.style.marginTop = "8px";
       add.innerHTML = `<span class="grow small">Limit this site to</span><input class="min" type="number" min="0" max="1440" value="30"><span class="small">min/day</span><button class="btn small primary">Add</button>`;
+      const clockOpt = document.createElement("label");
+      clockOpt.className = "row small";
+      clockOpt.style.marginTop = "6px";
+      clockOpt.innerHTML = `<input type="checkbox" checked> Show a ticking clock on this site`;
       const err = document.createElement("div");
       $("button", add).onclick = async () => {
         err.replaceChildren();
-        const rule = { name: host, domains: [host], limit: Number($("input", add).value) };
+        const rule = { name: host, domains: [host], limit: Number($("input", add).value), clock: $("input", clockOpt).checked };
         try {
           await send("saveSettings", { settings: { ...settings, rules: [...settings.rules, rule] } });
           refresh();
@@ -88,7 +92,7 @@ function renderHome() {
           if (e.code === "TL-405") openSettings();
         }
       };
-      el.append(add, err);
+      el.append(add, clockOpt, err);
     }
     now.append(el);
   }
@@ -118,7 +122,6 @@ function openSettings() {
   renderRuleEditor();
   $("#reset-hour").value = draft.resetHour;
   $("#warnings").checked = draft.warnings;
-  $("#show-timer").checked = draft.showTimer !== false;
   $("#update-source").value = draft.updateSource;
   $("#version").textContent = `v${VERSION}`;
   updateSaveState();
@@ -174,10 +177,12 @@ function renderRuleEditor() {
       <input class="min limit" type="number" min="0" max="1440" value="${esc(r.limit)}" title="Minutes per day">
       <button class="btn icon del" title="Remove this limit">🗑</button>
       <input class="domains" placeholder="youtube.com, reddit.com" value="${esc(r.domains.join(", "))}">
-      <span class="small muted">min/day</span>`;
+      <span class="small muted">min/day</span>
+      <label class="row small clock-opt"><input type="checkbox" class="clock" ${r.clock ? "checked" : ""}> Show ticking clock on these sites</label>`;
     $(".name", el).oninput = (e) => { r.name = e.target.value; };
     $(".limit", el).oninput = (e) => { r.limit = e.target.value === "" ? NaN : Number(e.target.value); updateSaveState(); };
     $(".domains", el).oninput = (e) => { r.domains = e.target.value.split(/[,\s]+/).filter(Boolean); updateSaveState(); };
+    $(".clock", el).onchange = (e) => { r.clock = e.target.checked; };
     $(".del", el).onclick = () => { draft.rules.splice(i, 1); renderRuleEditor(); updateSaveState(); };
     box.append(el);
   });
@@ -190,7 +195,6 @@ function normalized() {
 function updateSaveState() {
   draft.resetHour = Number($("#reset-hour").value);
   draft.warnings = $("#warnings").checked;
-  draft.showTimer = $("#show-timer").checked;
   draft.updateSource = $("#update-source").value;
   const loosening = state.hasPassword && !isTightening(state.settings, normalized());
   $("#save-pw").classList.toggle("hidden", !loosening);
@@ -242,7 +246,6 @@ $("#toggle").onclick = () => ($("#settings").classList.contains("hidden") ? open
 $("#add-rule").onclick = () => { draft.rules.push({ name: "", domains: [], limit: 30 }); renderRuleEditor(); updateSaveState(); };
 $("#reset-hour").onchange = updateSaveState;
 $("#warnings").onchange = updateSaveState;
-$("#show-timer").onchange = updateSaveState;
 $("#update-source").oninput = updateSaveState;
 $("#save").onclick = save;
 $("#check-updates").onclick = checkUpdates;

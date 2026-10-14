@@ -54,6 +54,9 @@ assert.equal(c.validateRule({ domains: ["a.com"], limit: -1 }).error, "TL-502");
 assert.equal(c.validateRule({ domains: ["a.com"], limit: 2.5 }).error, "TL-502");
 assert.equal(c.validateRule({ domains: ["a.com"], limit: NaN }).error, "TL-502");
 
+assert.equal(c.validateRule({ domains: ["a.com"], limit: 5 }).rule.clock, false, "clock is opt-in");
+assert.equal(c.validateRule({ domains: ["a.com"], limit: 5, clock: true }).rule.clock, true);
+
 // misc
 assert.equal(c.fmtDuration(42), "42s");
 assert.equal(c.fmtDuration(125 * 60), "2h 05m");

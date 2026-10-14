@@ -7,7 +7,7 @@ const FEED = `https://raw.githubusercontent.com/${REPO}/main/updates/latest.json
 const BLOCKED = chrome.runtime.getURL("app/blocked.html");
 const MAX_GAP = 90; // seconds; a longer gap between ticks means the computer slept
 const KEEP_DAYS = 35;
-const DEFAULTS = { rules: [], resetHour: 0, warnings: true, showTimer: true, updateSource: "" };
+const DEFAULTS = { rules: [], resetHour: 0, warnings: true, updateSource: "" };
 
 // Every state change goes through one queue, so two events firing together
 // can't count the same seconds twice.
@@ -205,11 +205,12 @@ const handlers = {
     const host = core.hostOf(sender.tab && sender.tab.url);
     await serial(flush);
     const s = await getSettings();
-    if (!host || !s.showTimer) return null;
+    if (!host) return null;
     const now = Date.now();
     const day = core.dayKey(now, s.resetHour);
     const { [`usage:${day}`]: usage = {}, unlocks = {} } = await load([`usage:${day}`, "unlocks"]);
-    const mine = core.ruleFor(s.rules, host)
+    // Only limits with "Show ticking clock" ticked get the clock.
+    const mine = core.ruleFor(s.rules.filter((r) => r.clock), host)
       .map((r) => [r, core.ruleStatus(r, usage, unlocks, now, s.resetHour)])
       .sort((a, b) => a[1].left - b[1].left);
     if (!mine.length) return null;
@@ -218,7 +219,7 @@ const handlers = {
   },
 
   async logError({ code, details }) {
-    await logError(code === "TL-203" ? code : "TL-999", details);
+    await logError(["TL-203", "TL-204"].includes(code) ? code : "TL-999", details);
   },
 
   async unlock({ password, ruleId, minutes }) {
@@ -266,7 +267,6 @@ const handlers = {
       rules,
       resetHour: Math.min(23, Math.max(0, Number(settings.resetHour) || 0)),
       warnings: settings.warnings !== false,
-      showTimer: settings.showTimer !== false,
       updateSource: String(settings.updateSource || "").trim(),
     };
     if (rules.length && !pw) throw coded("TL-405");

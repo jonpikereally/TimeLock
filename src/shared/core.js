@@ -95,7 +95,7 @@ export function validateRule(r) {
   if (!domains.length || domains.includes(null)) return { error: "TL-501" };
   const limit = Number(r.limit);
   if (!Number.isFinite(limit) || limit < 0 || limit > 24 * 60 || Math.round(limit) !== limit) return { error: "TL-502" };
-  return { rule: { id: r.id, name: String(r.name || "").trim() || domains[0], domains, limit } };
+  return { rule: { id: r.id, name: String(r.name || "").trim() || domains[0], domains, limit, clock: r.clock === true } };
 }
 
 export function fmtDuration(secs) {
