@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "url": "TimeLock.zip",
-  "notes": "First release: tracks time per site, daily limits that lock sites for the rest of the day, and password unlocks."
+  "notes": "A small ticking countdown clock now sits in the top-right corner of every site that has a limit. It turns orange at 5 minutes, red at 1 minute, green while unlocked, and fades out when your mouse comes near. Turn it off in Settings."
 }
