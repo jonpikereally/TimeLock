@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
+  "version": "2.0.1",
   "url": "TimeLock.zip",
-  "notes": "Works with the new TimeLock for Mac app: see your app time in the popup, and add Mac apps to a limit so app time counts toward it (apps are tracked, never locked). The extension now has a fixed ID, so remove it and load it again once (your limits and history in this browser start fresh)."
+  "notes": "Fix: time no longer keeps counting when the browser is in the background behind another app (macOS kept reporting the window as focused). Adds a one-time restore for data from the extension's previous ID."
 }
