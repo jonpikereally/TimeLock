@@ -1,1 +1,1 @@
-New app icon: the same hourglass as the menu bar, in TimeLock blue.
+Fix: a paused VLC (and other players that keep their audio stream open while paused) no longer counts as playing. Playback is now read from the player's own keep-awake signals, which it drops when you pause.

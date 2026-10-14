@@ -6,12 +6,16 @@ import IOKit.pwr_mgt
 /// frontmost app is playing media. Media players (VLC, Spotify, QuickTime…)
 /// also count while they play in the background.
 ///
-/// "Playing" comes from power assertions, which need no permission:
-///  • video: the app holds a keep-the-display-awake assertion;
-///  • sound: coreaudiod holds a no-idle-sleep assertion "created for" the
-///    app's PID while it plays audio.
-/// Audio interface software and DAWs keep audio running all day, so sound
-/// only counts for known media players and browsers.
+/// "Playing" comes from the app's own power assertions, which need no
+/// permission and which players hold only while actually playing:
+///  • video: keep-the-display-awake (VLC, QuickTime, browsers…);
+///  • sound: keep-the-Mac-awake (VLC's "VLC media playback", browsers'
+///    "Playing audio"…).
+/// Not used: coreaudiod's "created for PID" assertions and Core Audio's
+/// "is running output". VLC keeps its audio stream open while paused (it
+/// sends silence), and DAWs and audio-interface software keep theirs open
+/// all day, so both say "playing" when nothing is. Sound also only counts
+/// for known media players and browsers.
 final class Tracker {
     enum State: Equatable {
         case counting(String)
@@ -220,10 +224,8 @@ final class Tracker {
                 if type == "PreventUserIdleDisplaySleep" || type == "NoDisplaySleepAssertion" {
                     m.video.insert(pid.int32Value)
                 }
-                // coreaudiod's "created for PID" assertions while audio plays.
-                if let forPid = (a["AssertionOnBehalfOfPID"] as? NSNumber)?.int32Value,
-                   (a["AssertName"] as? String ?? "").hasPrefix("com.apple.audio.") {
-                    m.sound.insert(forPid)
+                if type == "PreventUserIdleSystemSleep" || type == "NoIdleSleepAssertion" {
+                    m.sound.insert(pid.int32Value)
                 }
             }
         }
