@@ -1,1 +1,1 @@
-{"version": "2.2.0", "url": "TimeLock-Mac.zip", "notes": "Version 2.2.0: TimeLock for Mac, the browser extension and the Stream Deck plugin now share one version number (this jumps from 1.3.0). No other changes."}
+{"version": "2.3.0", "url": "TimeLock-Mac.zip", "notes": "Click the hourglass to open the TimeLock browser popup (the browser comes to the front, launching it if needed). Right-click or \u2325-click for this menu, which also has \"Open TimeLock in the Browser\". Needs the browser extension 2.3.0 or newer."}
