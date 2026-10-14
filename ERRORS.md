@@ -55,6 +55,7 @@ Codes are grouped: `1xx` extension updates, `2xx` time tracking, `3xx` blocking,
 | `TL-905` | **Stream Deck installer:** the Stream Deck app isn't installed. | Install the Stream Deck app from Elgato, open it once, then run `streamdeck/install.sh` again. |
 | `TL-906` | **Stream Deck installer:** copying the plugin into Stream Deck's Plugins folder failed. | Quit the Stream Deck app and run `streamdeck/install.sh` again. |
 | `TL-907` | **Stream Deck installer:** the plugin was installed but the Stream Deck app didn't reopen. | Open the Stream Deck app yourself. |
+| `TL-908` | **Stream Deck:** TimeLock for Mac is running, but it's older than v1.2.0 and doesn't share live status yet. | Click the hourglass in the menu bar → **Check for Updates…** → Install and Relaunch. |
 | `TL-999` | Something unexpected went wrong. | Copy the details and paste them into an AI assistant with a link to this page, or open an issue. |
 
 Forgot your password? It can't be recovered (only a hash is stored). Remove TimeLock in `chrome://extensions` and add it again; your time history and limits are lost.

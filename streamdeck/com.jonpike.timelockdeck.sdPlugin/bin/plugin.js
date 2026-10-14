@@ -25,12 +25,17 @@ const log = (msg) => send({ event: "logMessage", payload: { message: `[timelockd
 
 const contexts = new Map();   // context -> { action, settings, problem, lastImage, lastFeedback }
 const inspectors = new Map(); // context -> action, while its settings panel is open
+// Whether the TimeLock process exists, for telling "not running" from "too old".
+let processRunning;
+const checkProcess = () => execFile("/usr/bin/pgrep", ["-x", "TimeLock"], (err) => { processRunning = !err; });
+checkProcess();
+setInterval(checkProcess, 5000);
 let snap = data.snapshot();
 let loggedProblems = new Set();
 
 setInterval(() => {
   if (!contexts.size) return;
-  snap = data.snapshot();
+  snap = data.snapshot(Date.now(), data.DIR, processRunning);
   for (const e of snap.errors) {
     if (!loggedProblems.has(e.code + e.details)) { loggedProblems.add(e.code + e.details); log(`${e.code} ${e.details}`); }
   }
@@ -66,6 +71,7 @@ function showProblem(context, entry, code, top, line) {
 /// The first problem that stops this key showing real numbers, if any.
 function blocker(needs) {
   if (snap.errors.length) return ["TL-903", "TimeLock", "data error"];
+  if (needs.mac && snap.macOutdated) return ["TL-908", "TimeLock", "update Mac app"];
   if (needs.mac && !snap.macRunning) return ["TL-901", "TimeLock", snap.installed ? "Mac app off" : "not installed"];
   if (needs.browser && !snap.browserConnected) return ["TL-902", "TimeLock", "no browser data"];
   return null;
@@ -90,9 +96,18 @@ function pickLimit(settings) {
   return st ? { st } : { missing: settings.limit };
 }
 
+// No limits yet is a normal state, not a problem: say so without an error code.
+function noLimits(context, entry) {
+  if (entry.action.endsWith(".dial")) {
+    return setFeedback(context, entry, { title: "TimeLock", value: "No limits yet", indicator: { value: 0 }, icon: draw.dialIcon(draw.COLORS.muted) });
+  }
+  setImage(context, entry, draw.text({ top: "TimeLock", big: "No limits", sub: "add one in the", bottom: "browser popup", color: draw.COLORS.muted }));
+}
+
 function renderLimitKey(context, entry, settings) {
   const b = blocker({ browser: true });
   if (b) return showProblem(context, entry, ...b);
+  if (!snap.limits.length) return noLimits(context, entry);
   const { st, missing } = pickLimit(settings);
   if (!st) return showProblem(context, entry, "TL-904", missing, "limit gone");
   const color = draw.limitColor(st);
@@ -121,6 +136,7 @@ function setFeedback(context, entry, payload) {
 function renderDial(context, entry, settings) {
   const b = blocker({ browser: true });
   if (b) return showProblem(context, entry, ...b);
+  if (!snap.limits.length) return noLimits(context, entry);
   const { st, missing } = pickLimit(settings);
   if (!st) return showProblem(context, entry, "TL-904", missing, "limit gone");
   const color = draw.limitColor(st);
@@ -241,7 +257,7 @@ ws.on("message", (raw) => {
   switch (event) {
     case "willAppear":
       contexts.set(context, { action, settings: payload.settings || {} });
-      snap = data.snapshot();
+      snap = data.snapshot(Date.now(), data.DIR, processRunning);
       render(context, contexts.get(context));
       break;
     case "willDisappear":

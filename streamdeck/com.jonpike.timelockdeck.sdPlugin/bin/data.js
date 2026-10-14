@@ -24,6 +24,7 @@ const ERRORS = {
   "TL-902": ["No data from the TimeLock browser extension yet.", "Open your browser with the TimeLock extension installed; it syncs every 30 seconds."],
   "TL-903": ["Couldn't read TimeLock's data files.", "Quit and reopen TimeLock for Mac. If it persists, copy the details."],
   "TL-904": ["The limit picked for this key doesn't exist any more.", "Pick another limit in this key's settings."],
+  "TL-908": ["TimeLock for Mac is running but is too old for the Stream Deck plugin.", "Click the hourglass in the menu bar → Check for Updates… (the plugin needs v1.2.0 or newer)."],
 };
 const describe = (code) => {
   const [summary, hint] = ERRORS[code] || ["Something unexpected went wrong.", "Copy the details and ask for help."];
@@ -75,7 +76,9 @@ function limitStatus(limit, sites, apps, now) {
 }
 
 /// Everything the keys need, read fresh from disk.
-function snapshot(now = Date.now(), dir = DIR) {
+/// `processRunning` (from pgrep, when known) tells an old Mac app that writes
+/// no status.json apart from one that isn't running at all.
+function snapshot(now = Date.now(), dir = DIR, processRunning) {
   const errors = [];
   const st = readJSON(path.join(dir, "status.json"));
   const br = readJSON(path.join(dir, "browser.json"));
@@ -104,6 +107,7 @@ function snapshot(now = Date.now(), dir = DIR) {
     day,
     installed: !st.missing || !br.missing,
     macRunning,
+    macOutdated: !macRunning && processRunning === true && (!status || now - status.at > STATUS_FRESH),
     state: macRunning ? status.state : "off",
     front: macRunning ? status.app || null : null,
     background: macRunning ? status.background || [] : [],

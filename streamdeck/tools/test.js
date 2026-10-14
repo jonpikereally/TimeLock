@@ -67,6 +67,12 @@ fs.writeFileSync(path.join(dir, "browser.json"), JSON.stringify({
   // Nothing installed.
   const empty = data.snapshot(now, fs.mkdtempSync(path.join(process.env.TMPDIR || os.tmpdir(), "tldeck-empty-")));
   assert.equal(empty.installed, false);
+  // Old Mac app (no status.json) still running → "update", not "off".
+  const old = fs.mkdtempSync(path.join(process.env.TMPDIR || os.tmpdir(), "tldeck-old-"));
+  fs.writeFileSync(path.join(old, "browser.json"), JSON.stringify({ at: now, day, resetHour: 0, sites: {}, limits: [] }));
+  assert.equal(data.snapshot(now, old, true).macOutdated, true);
+  assert.equal(data.snapshot(now, old, false).macOutdated, false);
+  assert.equal(data.snapshot(now, old).limits.length, 0);
   console.log("PASS data.js unit tests");
 }
 
