@@ -30,6 +30,10 @@ It counts the app in front, pauses after a minute with no mouse or keyboard inpu
 
 **How they talk:** the app registers itself with Chrome, Brave, Edge, Chromium and Vivaldi as a [native messaging](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging) host. Every 30 seconds the browser runs it briefly to swap today's numbers. Nothing listens on the network.
 
+## Stream Deck
+
+**TimeLock Deck** (in [`streamdeck/`](streamdeck/)) puts your limits, screen time and what's counting right now on Stream Deck keys, with a limits dial for the Stream Deck +. Install with `streamdeck/install.sh`. It reads TimeLock for Mac's data, so it needs the Mac app (1.2 or newer).
+
 ## What it can't stop
 
 It's a speed bump for your own habits, not parental control. Anyone can turn it off in `chrome://extensions` or use another browser. Forgetting the password means removing and re-adding the extension, which wipes your history and limits.

@@ -1,1 +1,1 @@
-Media now counts: VLC, Spotify, QuickTime, Music, Podcasts, TV, IINA and other media players count while they play, even in the background (marked ♪ in the menu), and playing media keeps the app in front counting while you're away. DAWs and audio-interface software, which keep audio running all day, don't count unless they're in front and you're using them.
+Shares live status (what's counting right now and today's totals) with the new TimeLock Deck Stream Deck plugin.

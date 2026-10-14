@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "UUID": "com.jonpike.timelockdeck",
+  "Name": "TimeLock Deck",
+  "Version": "1.0.0.0",
+  "Author": "Jon Pike",
+  "Description": "See your TimeLock limits, screen time and what's being counted right now on your Stream Deck. Works with the TimeLock browser extension and TimeLock for Mac.",
+  "URL": "https://github.com/jonpikereally/TimeLock",
+  "Category": "TimeLock",
+  "CategoryIcon": "imgs/categoryIcon",
+  "Icon": "imgs/pluginIcon",
+  "CodePath": "bin/plugin.js",
+  "SDKVersion": 2,
+  "Nodejs": { "Version": "20" },
+  "Software": { "MinimumVersion": "6.4" },
+  "OS": [ { "Platform": "mac", "MinimumVersion": "13" } ],
+  "Actions": [
+    {
+      "Name": "Limit",
+      "UUID": "com.jonpike.timelockdeck.limit",
+      "Icon": "imgs/limit",
+      "Tooltip": "A ring showing how much of one daily limit is left. Turns orange near the end, red with a lock when locked, green while unlocked. Press to switch between time left and time used.",
+      "PropertyInspectorPath": "ui/limit.html",
+      "Controllers": [ "Keypad" ],
+      "States": [ { "Image": "imgs/limitKey" } ]
+    },
+    {
+      "Name": "Limits Dial",
+      "UUID": "com.jonpike.timelockdeck.dial",
+      "Icon": "imgs/dial",
+      "Tooltip": "Stream Deck +: turn to step through your limits; the bar shows how much is used. Press or tap to switch between time left and used.",
+      "PropertyInspectorPath": "ui/limit.html",
+      "Controllers": [ "Encoder" ],
+      "Encoder": {
+        "layout": "$B1",
+        "TriggerDescription": { "Rotate": "Next / previous limit", "Push": "Time left / used", "Touch": "Time left / used" }
+      },
+      "States": [ { "Image": "imgs/limitKey" } ]
+    },
+    {
+      "Name": "Time Today",
+      "UUID": "com.jonpike.timelockdeck.time",
+      "Icon": "imgs/time",
+      "Tooltip": "How long you've spent today in one Mac app or on one website. Green while that app is being counted.",
+      "PropertyInspectorPath": "ui/time.html",
+      "Controllers": [ "Keypad" ],
+      "States": [ { "Image": "imgs/timeKey" } ]
+    },
+    {
+      "Name": "Screen Time Today",
+      "UUID": "com.jonpike.timelockdeck.today",
+      "Icon": "imgs/today",
+      "Tooltip": "Total time today on your Mac or in the browser. Press to switch.",
+      "PropertyInspectorPath": "ui/today.html",
+      "Controllers": [ "Keypad" ],
+      "States": [ { "Image": "imgs/todayKey" } ]
+    },
+    {
+      "Name": "Now Counting",
+      "UUID": "com.jonpike.timelockdeck.now",
+      "Icon": "imgs/now",
+      "Tooltip": "What TimeLock for Mac is counting right now and its time today, plus any media playing in the background. Shows Away or Screen locked when paused.",
+      "PropertyInspectorPath": "ui/now.html",
+      "Controllers": [ "Keypad" ],
+      "States": [ { "Image": "imgs/nowKey" } ]
+    }
+  ]
+}

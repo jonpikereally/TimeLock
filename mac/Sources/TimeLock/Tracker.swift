@@ -110,6 +110,36 @@ final class Tracker {
             onChange()
         }
         if dirty && now.timeIntervalSince(lastSave) >= 10 { save() }
+        writeStatus(now)
+    }
+
+    /// status.json: what's being counted right now plus today's totals, every
+    /// tick, for live readers like the Stream Deck plugin. A reader treats it
+    /// as "TimeLock isn't running" once it's more than 30 seconds old.
+    private func writeStatus(_ now: Date) {
+        let stateName: String
+        var front: String? = nil
+        switch state {
+        case .counting(let name): stateName = "counting"; front = name
+        case .away: stateName = "away"
+        case .screenLocked: stateName = "screenLocked"
+        case .nothing: stateName = "idle"
+        }
+        var status: [String: Any] = [
+            "at": (now.timeIntervalSince1970 * 1000).rounded(),
+            "day": day,
+            "state": stateName,
+            "background": playingInBackground,
+            "today": today.mapValues { ($0 * 10).rounded() / 10 },
+            "version": AppVersion.version,
+        ]
+        if let front { status["app"] = front }
+        do {
+            let data = try JSONSerialization.data(withJSONObject: status, options: [.sortedKeys])
+            try Store.writeAtomically(data, to: Store.statusFile)
+        } catch {
+            ErrorReporter.shared.report(AppError(.usageSaveFailed, "status.json — \(error.localizedDescription)"), surface: .logOnly)
+        }
     }
 
     func save() {

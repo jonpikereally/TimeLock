@@ -25,6 +25,7 @@ struct BrowserSnapshot: Codable {
 /// Everything lives in ~/Library/Application Support/TimeLock/:
 ///   apps/<YYYY-MM-DD>.json  seconds per app for that day (written by the menu bar app)
 ///   browser.json            the extension's latest snapshot (written by the connector)
+///   status.json             what's counting right now + today's totals, every 2 s (menu bar app)
 /// Both processes only ever replace whole files atomically, so a reader never
 /// sees half a write.
 enum Store {
@@ -32,6 +33,8 @@ enum Store {
         .appendingPathComponent("TimeLock", isDirectory: true)
     static let appsFolder = folder.appendingPathComponent("apps", isDirectory: true)
     static let browserFile = folder.appendingPathComponent("browser.json")
+    /// Live status for other readers (Stream Deck plugin); see Tracker.writeStatus.
+    static let statusFile = folder.appendingPathComponent("status.json")
     static let keepDays = 35
 
     static func ensureFolders() throws {

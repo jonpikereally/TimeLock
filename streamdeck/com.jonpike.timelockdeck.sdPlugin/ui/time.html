@@ -1,0 +1,8 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="style.css"></head><body>
+<div id="problem" class="problem" style="display:none"></div>
+<div class="row"><label>Kind</label><select name="kind" data-default="app"><option value="app">Mac app</option><option value="site">Website</option></select></div>
+<div class="row" data-show-when="kind=app"><label>App</label><select name="name" data-list="apps"><option value="">Loading…</option></select></div>
+<div class="row" data-show-when="kind=site"><label>Website</label><select name="name" data-list="sites"><option value="">Loading…</option></select></div>
+<p class="hint">Today's time in one app or on one website (subdomains included). The lists show what's been used today; the key turns green while the app is the one being counted.</p>
+<p class="status" id="status"></p>
+<script src="pi.js"></script></body></html>

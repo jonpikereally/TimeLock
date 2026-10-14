@@ -4,7 +4,7 @@ Every problem TimeLock can show you has a code like `TL-301`. Find yours below.
 
 **Getting help from an AI assistant:** click **Copy Error Details** on the error, then paste it into ChatGPT, Claude or similar along with a link to this page. For a plain-text copy that's easy for AI assistants to read, use https://raw.githubusercontent.com/jonpikereally/TimeLock/main/ERRORS.md
 
-Codes are grouped: `1xx` extension updates, `2xx` time tracking, `3xx` blocking, `4xx` password, `5xx` limits and settings, `6xx` the Mac app and its connection to the extension, `7xx` Mac app updates, `8xx` the Mac installer, `999` anything else. Codes are never reused or renumbered.
+Codes are grouped: `1xx` extension updates, `2xx` time tracking, `3xx` blocking, `4xx` password, `5xx` limits and settings, `6xx` the Mac app and its connection to the extension, `7xx` Mac app updates, `8xx` the Mac installer, `9xx` the Stream Deck plugin, `999` anything else. Codes are never reused or renumbered.
 
 | Code | What happened | What to try |
 |---|---|---|
@@ -48,6 +48,13 @@ Codes are grouped: `1xx` extension updates, `2xx` time tracking, `3xx` blocking,
 | `TL-801` | **Mac installer:** couldn't copy TimeLock into `~/Applications`. | Check that `~/Applications` exists and is writable, then run **Install TimeLock.command** again. |
 | `TL-802` | **Mac installer:** couldn't sign TimeLock for this Mac. | Run the installer again. If it repeats, copy the Terminal output and open an issue. |
 | `TL-803` | **Mac installer:** TimeLock was installed but didn't open. | Open it yourself from `~/Applications`. |
+| `TL-901` | **Stream Deck:** TimeLock for Mac isn't running (or isn't installed, or is older than v1.2.0, which is when it started sharing live status), so app time can't be shown. | Press the key to open TimeLock. If it's already running, use its **Check for Updates…**. Not installed? See the README. |
+| `TL-902` | **Stream Deck:** there's no data from the TimeLock browser extension for today, so limits and website time can't be shown. | Open your browser with the TimeLock extension installed and the Mac app running; they sync every 30 seconds. |
+| `TL-903` | **Stream Deck:** one of TimeLock's data files in `~/Library/Application Support/TimeLock` couldn't be read. | Quit and reopen TimeLock for Mac. If it keeps happening, copy the details and open an issue. |
+| `TL-904` | **Stream Deck:** the limit chosen for this key was renamed or deleted in the extension. | Pick a limit again in the key's settings. |
+| `TL-905` | **Stream Deck installer:** the Stream Deck app isn't installed. | Install the Stream Deck app from Elgato, open it once, then run `streamdeck/install.sh` again. |
+| `TL-906` | **Stream Deck installer:** copying the plugin into Stream Deck's Plugins folder failed. | Quit the Stream Deck app and run `streamdeck/install.sh` again. |
+| `TL-907` | **Stream Deck installer:** the plugin was installed but the Stream Deck app didn't reopen. | Open the Stream Deck app yourself. |
 | `TL-999` | Something unexpected went wrong. | Copy the details and paste them into an AI assistant with a link to this page, or open an issue. |
 
 Forgot your password? It can't be recovered (only a hash is stored). Remove TimeLock in `chrome://extensions` and add it again; your time history and limits are lost.
