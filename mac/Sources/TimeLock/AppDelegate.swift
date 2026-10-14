@@ -85,7 +85,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         for (name, secs) in apps.prefix(10) {
             let live: Bool
             if case .counting(let n) = tracker.state { live = n == name } else { live = false }
-            menu.addItem(row((live ? "● " : "    ") + name, Self.duration(secs)))
+            let playing = tracker.playingInBackground.contains(name)
+            menu.addItem(row((live ? "● " : playing ? "♪ " : "    ") + name, Self.duration(secs)))
         }
         if apps.count > 10 {
             let more = NSMenuItem(title: "More apps", action: nil, keyEquivalent: "")
@@ -139,8 +140,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func statusText() -> String {
         switch tracker.state {
-        case .counting(let name): return "Counting: \(name)"
-        case .away: return "Paused — away from the keyboard"
+        case .counting(let name):
+            let bg = tracker.playingInBackground
+            return "Counting: \(name)" + (bg.isEmpty ? "" : " + \(bg.joined(separator: ", ")) playing")
+        case .away:
+            let bg = tracker.playingInBackground
+            return bg.isEmpty ? "Paused — away from the keyboard" : "Away — counting \(bg.joined(separator: ", ")) (playing)"
         case .screenLocked: return "Paused — screen locked"
         case .nothing: return "Paused"
         }
