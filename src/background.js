@@ -7,7 +7,7 @@ const FEED = `https://raw.githubusercontent.com/${REPO}/main/updates/latest.json
 const BLOCKED = chrome.runtime.getURL("app/blocked.html");
 const MAX_GAP = 90; // seconds; a longer gap between ticks means the computer slept
 const KEEP_DAYS = 35;
-const DEFAULTS = { rules: [], resetHour: 0, warnings: true, updateSource: "" };
+const DEFAULTS = { rules: [], resetHour: 0, warnings: true, showTimer: true, updateSource: "" };
 
 // Every state change goes through one queue, so two events firing together
 // can't count the same seconds twice.
@@ -199,6 +199,28 @@ const handlers = {
     };
   },
 
+  // For the ticking clock on limited sites (src/content.js). The host comes
+  // from the tab itself, not from the message.
+  async pageStatus(msg, sender) {
+    const host = core.hostOf(sender.tab && sender.tab.url);
+    await serial(flush);
+    const s = await getSettings();
+    if (!host || !s.showTimer) return null;
+    const now = Date.now();
+    const day = core.dayKey(now, s.resetHour);
+    const { [`usage:${day}`]: usage = {}, unlocks = {} } = await load([`usage:${day}`, "unlocks"]);
+    const mine = core.ruleFor(s.rules, host)
+      .map((r) => [r, core.ruleStatus(r, usage, unlocks, now, s.resetHour)])
+      .sort((a, b) => a[1].left - b[1].left);
+    if (!mine.length) return null;
+    const [r, st] = mine[0];
+    return { name: r.name, domains: r.domains, left: st.left, used: st.used, limit: st.limit, unlockedUntil: st.unlockedUntil };
+  },
+
+  async logError({ code, details }) {
+    await logError(code === "TL-203" ? code : "TL-999", details);
+  },
+
   async unlock({ password, ruleId, minutes }) {
     await verify(password);
     const s = await getSettings();
@@ -244,6 +266,7 @@ const handlers = {
       rules,
       resetHour: Math.min(23, Math.max(0, Number(settings.resetHour) || 0)),
       warnings: settings.warnings !== false,
+      showTimer: settings.showTimer !== false,
       updateSource: String(settings.updateSource || "").trim(),
     };
     if (rules.length && !pw) throw coded("TL-405");
@@ -268,7 +291,7 @@ const handlers = {
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   const h = handlers[msg && msg.type];
   if (!h) return false;
-  h(msg)
+  h(msg, sender)
     .then((result) => reply({ ok: true, result }))
     .catch((e) => {
       const code = e.code || "TL-999";

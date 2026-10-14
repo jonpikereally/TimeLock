@@ -12,6 +12,7 @@ Codes are grouped: `1xx` updates, `2xx` time tracking, `3xx` blocking, `4xx` pas
 | `TL-102` | The update feed answered, but not with a valid `latest.json`. | Clear the Update source in Settings to go back to the built-in GitHub feed. If you're already on it, open an issue. |
 | `TL-201` | Saving the time you spent on a site failed, usually because the disk is full. | Free some disk space. If it keeps happening, copy the details and open an issue. |
 | `TL-202` | TimeLock couldn't read its saved time or settings. | Restart Chrome. If it persists, copy the details and open an issue. |
+| `TL-203` | The countdown clock in the corner of a limited site couldn't get its time from TimeLock. Tracking and locking are unaffected. | Reload the page. If it keeps happening, copy the details and open an issue. |
 | `TL-301` | Chrome refused the rule that blocks a locked site. Locked sites may still open until this is fixed. | Restart Chrome. If it persists, copy the details and open an issue. |
 | `TL-302` | A tab that was already open on a locked site couldn't be switched to the lock screen. | Close that tab yourself. New visits to the site are still blocked. |
 | `TL-401` | The password typed on the lock screen or in Settings was wrong. | Try again. After 3 wrong tries you have to wait before trying again. |

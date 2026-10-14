@@ -14,6 +14,7 @@ export const ERRORS = {
   "TL-102": ["The update feed returned something unreadable.", "Clear the Update source in Settings to go back to the built-in feed."],
   "TL-201": ["Couldn't save the time you spent on a site.", "Your disk may be full. Free some space; if it keeps happening, copy the details."],
   "TL-202": ["Couldn't read your saved time or settings.", "Restart Chrome. If it persists, copy the details."],
+  "TL-203": ["The countdown clock couldn't load on a page.", "Reload the page. Time is still tracked and limits still apply."],
   "TL-301": ["Couldn't turn on blocking for a locked site.", "Restart Chrome. Until this is fixed, locked sites may still open."],
   "TL-302": ["Couldn't send an open tab to the lock screen.", "Close the tab yourself; new visits are still blocked."],
   "TL-401": ["That password isn't right.", "Try again. After 3 wrong tries you'll have to wait before the next one."],

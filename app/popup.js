@@ -118,6 +118,7 @@ function openSettings() {
   renderRuleEditor();
   $("#reset-hour").value = draft.resetHour;
   $("#warnings").checked = draft.warnings;
+  $("#show-timer").checked = draft.showTimer !== false;
   $("#update-source").value = draft.updateSource;
   $("#version").textContent = `v${VERSION}`;
   updateSaveState();
@@ -189,6 +190,7 @@ function normalized() {
 function updateSaveState() {
   draft.resetHour = Number($("#reset-hour").value);
   draft.warnings = $("#warnings").checked;
+  draft.showTimer = $("#show-timer").checked;
   draft.updateSource = $("#update-source").value;
   const loosening = state.hasPassword && !isTightening(state.settings, normalized());
   $("#save-pw").classList.toggle("hidden", !loosening);
@@ -240,6 +242,7 @@ $("#toggle").onclick = () => ($("#settings").classList.contains("hidden") ? open
 $("#add-rule").onclick = () => { draft.rules.push({ name: "", domains: [], limit: 30 }); renderRuleEditor(); updateSaveState(); };
 $("#reset-hour").onchange = updateSaveState;
 $("#warnings").onchange = updateSaveState;
+$("#show-timer").onchange = updateSaveState;
 $("#update-source").oninput = updateSaveState;
 $("#save").onclick = save;
 $("#check-updates").onclick = checkUpdates;
