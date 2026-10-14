@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Locked · TimeLock</title>
+<link rel="icon" href="../icons/icon32.png">
+<link rel="stylesheet" href="app.css">
+<style>
+  body { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+  .lock { max-width: 440px; width: 100%; text-align: center; }
+  .lock img { width: 64px; height: 64px; }
+  .lock h1 { font-size: 24px; margin: 12px 0 4px; }
+  .lock .big { font-size: 15px; margin: 0 0 18px; }
+  .lock .card { text-align: left; padding: 14px; }
+  .lock details summary { cursor: pointer; color: var(--muted); }
+  .lock .row input[type=password] { flex: 1; }
+</style>
+</head>
+<body>
+<div class="lock">
+  <img src="../icons/icon128.png" alt="">
+  <h1 id="title">This site is locked</h1>
+  <p class="big muted" id="sub"></p>
+  <div class="card">
+    <div class="bar bad"><i style="width:100%"></i></div>
+    <p class="small" id="detail"></p>
+    <details id="unlock-box">
+      <summary>Unlock with password</summary>
+      <div class="row" style="margin-top:10px">
+        <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+        <select id="minutes">
+          <option value="5">for 5 min</option>
+          <option value="15" selected>for 15 min</option>
+          <option value="30">for 30 min</option>
+          <option value="60">for 1 hour</option>
+          <option value="day">for the rest of today</option>
+        </select>
+      </div>
+      <div id="err" style="margin-top:8px"></div>
+      <div class="row" style="margin-top:8px"><span class="grow small muted" id="wait"></span><button class="btn primary" id="unlock">Unlock</button></div>
+    </details>
+  </div>
+  <p class="small muted" id="url"></p>
+</div>
+<script type="module" src="blocked.js"></script>
+</body>
+</html>

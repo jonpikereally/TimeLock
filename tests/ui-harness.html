@@ -1,0 +1,51 @@
+<!doctype html>
+<!-- Opens the real popup and lock screen with a fake chrome.* API and sample data.
+     Serve the repo root (python3 -m http.server 8792) and open /tests/ui-harness.html
+     Add ?nopw to see first run (no password set). -->
+<html><head><meta charset="utf-8"><title>TimeLock UI harness</title>
+<style>html,body{margin:0;background:#888;font:13px sans-serif}iframe{border:0;background:#fff;margin:16px;box-shadow:0 2px 12px #0004;vertical-align:top}</style></head>
+<body>
+<iframe id="popup" width="380" height="640"></iframe>
+<iframe id="blocked" width="700" height="640"></iframe>
+<script type="module">
+import * as core from "/src/shared/core.js";
+const now = Date.now();
+const settings = { resetHour: 0, warnings: true, updateSource: "", rules: [
+  { id: "a", name: "Social", domains: ["reddit.com", "x.com"], limit: 30 },
+  { id: "b", name: "youtube.com", domains: ["youtube.com"], limit: 60 },
+  { id: "c", name: "News", domains: ["cnn.com"], limit: 20 },
+] };
+const usage = { "youtube.com": 2840, "reddit.com": 1500, "old.reddit.com": 320, "github.com": 4100, "cnn.com": 600, "mail.google.com": 900 };
+const unlocks = { c: now + 12 * 60000 };
+let hasPassword = !location.search.includes("nopw");
+const PW = "test";
+const fail = (code, details) => ({ ok: false, error: { code, details } });
+const handlers = {
+  state: ({ host }) => ({ version: "1.0.0", now, settings, hasPassword, usage, host: host || "youtube.com",
+    statuses: settings.rules.map((r) => core.ruleStatus(r, usage, unlocks, now, settings.resetHour)),
+    update: { available: true, current: "1.0.0", latest: "1.1.0", notes: "Weekly report.", url: "https://example.com/TimeLock.zip" },
+    errors: [{ code: "TL-302", details: "Example error for the harness", t: now }] }),
+  unlock: ({ password, ruleId, minutes }) => password === PW ? (unlocks[ruleId] = now + 9e5, { until: 0 }) : fail("TL-401"),
+  setPassword: ({ password }) => (hasPassword = true, undefined),
+  saveSettings: ({ settings: s, password }) => {
+    for (const r of s.rules) { const v = core.validateRule(r); if (v.error) return fail(v.error, String(r.domains)); }
+    if (!core.isTightening(settings, s) && password !== PW) return fail("TL-401");
+    Object.assign(settings, s, { rules: s.rules.map((r) => ({ ...core.validateRule(r).rule, id: r.id || Math.random().toString(36) })) });
+  },
+  checkUpdates: () => ({ checkedAt: now, current: "1.0.0", latest: "1.0.0", available: false }),
+  dismissErrors: () => {}, relockNow: ({ ruleId }) => { delete unlocks[ruleId]; },
+};
+const chromeMock = { runtime: { getManifest: () => ({ version: "1.0.0" }), getURL: (p) => "/" + p,
+  sendMessage: async (m) => { const r = await handlers[m.type](m); return r && r.ok === false ? r : { ok: true, result: r }; } } };
+async function load(id, page, hash = "") {
+  const f = document.getElementById(id);
+  const html = await (await fetch(`/app/${page}`)).text();
+  f.contentWindow.chrome = chromeMock;
+  const doc = f.contentDocument; doc.open();
+  doc.write(html.replace("<head>", '<head><base href="/app/">'));
+  doc.close();
+  if (hash) f.contentWindow.history.replaceState(null, "", "/app/" + page + hash);
+}
+load("popup", "popup.html");
+load("blocked", "blocked.html", "#https://www.reddit.com/r/all?x=1");
+</script></body></html>

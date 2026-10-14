@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TimeLock</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body class="popup">
+<header>
+  <img src="../icons/icon32.png" alt="">
+  <h1>TimeLock</h1>
+  <button class="btn icon" id="toggle" title="Settings">⚙︎</button>
+</header>
+<main>
+  <div id="banners"></div>
+
+  <section id="home">
+    <div id="now"></div>
+    <h2>Daily limits</h2>
+    <div id="limits"></div>
+    <h2 class="row"><span class="grow">Today</span><span id="total"></span></h2>
+    <div class="card"><ul class="sites" id="sites"></ul></div>
+  </section>
+
+  <section id="settings" class="hidden">
+    <h2>Password</h2>
+    <div class="card" id="pw-card"></div>
+
+    <h2>Limits</h2>
+    <div class="card">
+      <div id="rules-edit"></div>
+      <button class="btn small" id="add-rule">+ Add a limit</button>
+      <p class="muted small">Sites in one limit share its time. 0 minutes blocks them all day.</p>
+      <label class="field" for="reset-hour">A new day starts at</label>
+      <select id="reset-hour"></select>
+      <label class="row small" style="margin-top:8px"><input type="checkbox" id="warnings"> Warn me at 5 and 1 minutes left</label>
+      <div id="save-pw" class="hidden">
+        <label class="field" for="save-password">These changes loosen your limits, so they need your password</label>
+        <input type="password" id="save-password" autocomplete="current-password" style="width:100%">
+      </div>
+      <div id="save-err"></div>
+      <div class="row" style="margin-top:10px"><span class="grow muted small" id="save-msg"></span><button class="btn primary" id="save">Save</button></div>
+    </div>
+
+    <h2>Updates</h2>
+    <div class="card">
+      <div class="row"><span class="grow">Version <b id="version"></b></span><button class="btn small" id="check-updates">Check for Updates…</button></div>
+      <div id="update-result"></div>
+      <label class="field" for="update-source">Update source (leave empty for the built-in feed)</label>
+      <input id="update-source" style="width:100%" placeholder="https://…/latest.json">
+      <p class="small"><a id="gh" target="_blank">TimeLock on GitHub</a> · <a id="errlist" target="_blank">Error code list</a></p>
+    </div>
+  </section>
+</main>
+<script type="module" src="popup.js"></script>
+</body>
+</html>

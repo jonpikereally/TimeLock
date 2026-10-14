@@ -1,0 +1,1 @@
+First release: tracks time per site, daily limits that lock sites for the rest of the day, and password unlocks.
