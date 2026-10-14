@@ -90,6 +90,47 @@ const MAC_HOST = "com.jonpike.timelock";
 const MAC_EVERY = 25000;
 let lastMacSync = 0;
 
+// A second, long-lived connection lets the Mac app ask us to open the popup
+// when you click its menu bar hourglass (see PopupRequest in Connector.swift).
+// An open native port also keeps this service worker awake.
+let macPort = null;
+function listenToMac() {
+  if (macPort) return;
+  try {
+    macPort = chrome.runtime.connectNative(MAC_HOST);
+  } catch {
+    macPort = null;
+    return;
+  }
+  macPort.onMessage.addListener(async (msg) => {
+    if (msg && msg.type === "openPopup") {
+      const how = await openPopupForMac();
+      macPort && macPort.postMessage({ type: "popupOpened", how });
+    }
+  });
+  macPort.onDisconnect.addListener(() => {
+    const err = chrome.runtime.lastError && chrome.runtime.lastError.message || "";
+    macPort = null;
+    // Not installed: try again on the next update-check alarm instead of looping.
+    if (!/not found|forbidden/i.test(err)) setTimeout(listenToMac, 10000);
+  });
+  macPort.postMessage({ type: "listen" });
+}
+
+async function openPopupForMac() {
+  let win = await chrome.windows.getLastFocused({ windowTypes: ["normal"] }).catch(() => null);
+  if (!win) win = await chrome.windows.create({ focused: true }).catch(() => null);
+  if (win) await chrome.windows.update(win.id, { focused: true }).catch(() => {});
+  try {
+    await chrome.action.openPopup(win ? { windowId: win.id } : {});
+    return "popup";
+  } catch (e) {
+    // Older browsers, or no focused window: show the same page in a tab.
+    await chrome.tabs.create({ url: chrome.runtime.getURL("app/popup.html?full"), ...(win ? { windowId: win.id } : {}) });
+    return "tab";
+  }
+}
+
 async function macSync(force = false) {
   const now = Date.now();
   if (!force && now - lastMacSync < MAC_EVERY) return;
@@ -505,7 +546,7 @@ chrome.alarms.create("updates", { periodInMinutes: 6 * 60 });
 chrome.alarms.create("prune", { periodInMinutes: 24 * 60 });
 chrome.alarms.onAlarm.addListener((a) => {
   if (a.name === "tick" || a.name === "relock") tick(a.name);
-  else if (a.name === "updates") checkForUpdates();
+  else if (a.name === "updates") { checkForUpdates(); listenToMac(); }
   else if (a.name === "prune") pruneOldDays().catch((e) => logError("TL-201", e.message));
 });
 
@@ -528,3 +569,4 @@ chrome.runtime.onInstalled.addListener(() => {
   setTimeout(checkForUpdates, 5000);
 });
 restoreFromFile().finally(() => tick("startup"));
+listenToMac();

@@ -372,6 +372,9 @@ async function checkUpdates() {
 
 // ---------- wiring ----------
 
+// Opened as a tab (the Mac app's fallback): centre it instead of popup width.
+if (new URLSearchParams(location.search).has("full")) document.body.classList.replace("popup", "full");
+
 for (let h = 0; h < 24; h++) {
   const o = document.createElement("option");
   o.value = h;

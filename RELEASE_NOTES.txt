@@ -1,1 +1,1 @@
-Version 2.2.0: the extension, TimeLock for Mac and the Stream Deck plugin now share one version number. No other changes to the extension.
+Clicking the TimeLock hourglass in the Mac menu bar now opens this popup (TimeLock for Mac 2.3.0 or newer). The extension keeps a connection open to the Mac app for this. If your browser can't open the popup on request, TimeLock opens in a tab instead.

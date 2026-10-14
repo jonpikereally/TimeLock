@@ -13,6 +13,7 @@ enum ErrorCode: String, CaseIterable {
     case usageUnreadable = "TL-605"
     case loginItemFailed = "TL-606"
     case connectorFailed = "TL-607"
+    case popupFailed = "TL-608"
     // 7xx — Mac app updates
     case noUpdateSource = "TL-701"
     case badUpdateSource = "TL-702"
@@ -38,6 +39,7 @@ enum ErrorCode: String, CaseIterable {
         case .usageUnreadable: return "Your saved app time for today couldn't be read."
         case .loginItemFailed: return "Couldn't change Open at Login."
         case .connectorFailed: return "The browser extension sent TimeLock something it couldn't handle."
+        case .popupFailed: return "Couldn't open the TimeLock popup in your browser."
         case .noUpdateSource: return "No update source is set."
         case .badUpdateSource: return "The update source isn't a web link or a file path."
         case .updateSourceUnreachable: return "Couldn't reach the update source."
@@ -66,6 +68,8 @@ enum ErrorCode: String, CaseIterable {
             return "You can add TimeLock yourself in System Settings → General → Login Items."
         case .connectorFailed:
             return "Update both the extension and the Mac app to the latest version, then reload the extension."
+        case .popupFailed:
+            return "Check the browser is open and the TimeLock extension is enabled and up to date (2.3.0 or newer), then click again. Right-click the hourglass for the menu."
         case .noUpdateSource, .badUpdateSource:
             return "Set one with “Update Source…” in the menu, or leave it empty to use the built-in source."
         case .updateSourceUnreachable:

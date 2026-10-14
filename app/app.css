@@ -12,6 +12,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 body.popup { width: 380px; min-height: 300px; }
+body.full { max-width: 440px; margin: 24px auto; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 main { padding: 12px; }
 header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--card); border-bottom: 1px solid var(--line); }
 header img { width: 22px; height: 22px; }

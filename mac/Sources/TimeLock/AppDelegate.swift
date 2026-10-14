@@ -22,7 +22,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         refreshIcon()
         menu.delegate = self
         menu.autoenablesItems = false
-        statusItem.menu = menu
+        // Click: open the extension's popup. Right-click or ⌥-click: this menu.
+        statusItem.button?.target = self
+        statusItem.button?.action = #selector(statusItemClicked)
+        statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
 
         tracker.onChange = { [weak self] in self?.refreshIcon() }
         tracker.start()
@@ -61,6 +64,60 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             + (linkedBrowsers.isEmpty ? "" : "\n\nConnected to: \(linkedBrowsers.joined(separator: ", ")).")
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
+    }
+
+    // MARK: - Click → extension popup
+
+    @objc private func statusItemClicked() {
+        let event = NSApp.currentEvent
+        let wantsMenu = event?.type == .rightMouseUp || event?.modifierFlags.contains(.option) == true
+            || event?.modifierFlags.contains(.control) == true
+        // Until the extension has connected once there's no popup to open.
+        if wantsMenu || Store.loadBrowser() == nil { showMenu() } else { openExtensionPopup() }
+    }
+
+    private func showMenu() {
+        statusItem.menu = menu
+        statusItem.button?.performClick(nil)
+        statusItem.menu = nil
+    }
+
+    private var popupWait: Timer?
+
+    @objc private func openExtensionPopup() {
+        popupWait?.invalidate()
+        let fm = FileManager.default
+        try? fm.removeItem(at: PopupRequest.ackFile)
+        do {
+            try Store.ensureFolders()
+            try Store.writeAtomically(Data("\(Date().timeIntervalSince1970)".utf8), to: PopupRequest.requestFile)
+        } catch {
+            return ErrorReporter.shared.report(AppError(.popupFailed, "open-popup.request — \(error.localizedDescription)"),
+                                               surface: .alert, title: "Couldn't open TimeLock")
+        }
+        // Bring the browser forward (launching it if needed): popups open in its front window.
+        let id = PopupRequest.browserBundleID ?? "com.brave.Browser"
+        if let running = NSRunningApplication.runningApplications(withBundleIdentifier: id).first {
+            running.activate()
+        } else if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) {
+            NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+        }
+        // Wait for the extension to confirm; a cold browser launch can take a while.
+        let started = Date()
+        popupWait = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] t in
+            if fm.fileExists(atPath: PopupRequest.ackFile.path) {
+                try? fm.removeItem(at: PopupRequest.ackFile)
+                t.invalidate()
+            } else if Date().timeIntervalSince(started) > PopupRequest.freshFor {
+                t.invalidate()
+                try? fm.removeItem(at: PopupRequest.requestFile)
+                let e = AppError(.popupFailed, "No answer from the extension in \(id) within \(Int(PopupRequest.freshFor)) s")
+                ErrorReporter.shared.log(e)
+                if ErrorReporter.shared.present(e, title: "Couldn't open the TimeLock popup", actions: ["Show Menu"]) == 0 {
+                    self?.showMenu()
+                }
+            }
+        }
     }
 
     // MARK: - Menu (rebuilt each time it opens, so the numbers are live)
@@ -127,6 +184,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         menu.addItem(.separator())
 
+        menu.addItem(item("Open TimeLock in the Browser", #selector(openExtensionPopup)))
+        let tip = info("Tip: click the hourglass for the browser popup, right-click for this menu")
+        menu.addItem(tip)
+        menu.addItem(.separator())
         let login = item("Open at Login", #selector(toggleOpenAtLogin))
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(login)
