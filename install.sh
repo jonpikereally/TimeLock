@@ -125,10 +125,10 @@ Browsers only let you add an unpacked extension by hand:
   5. TimeLock → Details → turn on "Allow in Incognito", or incognito windows
      get around your limits.
   6. Back in the popup: Settings → "Mac app" should say Connected.
-     Then click the hourglass in the menu bar: it opens this popup.
+     The hourglass menu's "Open TimeLock in the Browser" opens this popup.
 
 Updating later:  cd "$DIR" && git pull   (then click ↻ on TimeLock in the
-extensions page). TimeLock for Mac updates itself: right-click the hourglass →
+extensions page). TimeLock for Mac updates itself: click the hourglass →
 Check for Updates.
 EOF
 [ -z "${TIMELOCK_NO_OPEN:-}" ] && open "$DIR" 2>/dev/null

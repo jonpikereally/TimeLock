@@ -31,7 +31,7 @@ Works in Chrome, Brave and Edge (version 120 or newer).
 2. Look for the hourglass in the menu bar. It needs no permissions and turns on Open at Login (switch that off in its menu).
 3. Reload the extension in `chrome://extensions` once. Its Settings → **Mac app** card should say *Connected*.
 
-**Click the hourglass** to open the extension's popup (the browser comes forward, launching if needed); **right-click** (or ⌥-click) it for the menu.
+Click the hourglass for today's apps, sites and limits; its **Open TimeLock in the Browser** item opens the extension's popup (the browser comes forward, launching if needed).
 
 It counts the app in front, pauses after a minute with no mouse or keyboard input unless that app is playing media, and stops while the screen is locked. Media players (VLC, Spotify, QuickTime, Music, Podcasts, TV, IINA and more) also count while they play in the background, marked ♪ in the menu. Playback is detected from the player's own macOS power assertions (keep the display awake for video, keep the Mac awake for sound), which players hold only while actually playing, so no permission is needed. Audio software that keeps sound running all day (DAWs, audio-interface apps) only counts when it's in front and you're using it. Data stays in `~/Library/Application Support/TimeLock`. It updates itself from this repo ("Check for Updates…" in its menu).
 

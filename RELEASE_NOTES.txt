@@ -1,1 +1,1 @@
-Clicking the TimeLock hourglass in the Mac menu bar now opens this popup (TimeLock for Mac 2.3.0 or newer). The extension keeps a connection open to the Mac app for this. If your browser can't open the popup on request, TimeLock opens in a tab instead.
+No changes to the extension in 2.3.1 (version kept in step with TimeLock for Mac).

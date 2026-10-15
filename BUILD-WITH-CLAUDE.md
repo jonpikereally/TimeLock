@@ -37,7 +37,7 @@ The last step is yours, because browsers don't let scripts add extensions:
 3. Click **Load unpacked** and pick the `~/TimeLock` folder.
 4. Pin TimeLock to the toolbar, open it and **set a password**. Pick one that's annoying to type, or have someone else set it.
 5. In the extension's **Details**, turn on **Allow in Incognito**. Otherwise incognito windows get around your limits.
-6. In the popup, go to ⚙︎ Settings → **Mac app**. It should say *Connected*. Click the hourglass in your menu bar: it opens the popup.
+6. In the popup, go to ⚙︎ Settings → **Mac app**. It should say *Connected*. The hourglass menu's **Open TimeLock in the Browser** opens this popup.
 
 ## Option B: have Claude build it with you
 
@@ -63,13 +63,13 @@ If you'd rather Claude do it (and explain each step), open **Claude Code** in a 
 - **Making limits stricter** never needs the password. **Loosening** them (raising, removing, or dropping a site) does.
 - **Goals:** ⚙︎ Settings → Goals. Give any app or site a minimum, a maximum, or both. Goals never lock anything.
 - **The on-page clock:** click **Show timer** next to a site in the popup. Drag the clock anywhere; double-click it to reset its position.
-- **Menu bar hourglass:** click it to open the popup; right-click it for today's apps, sites and limits.
+- **Menu bar hourglass:** click it for today's apps, sites and limits. **Open TimeLock in the Browser** opens the popup.
 - **It pauses** after a minute without mouse or keyboard input, unless a video or music player is playing. It also stops when the browser isn't the app in front, and when the screen is locked.
 
 ## Updating
 
 - **Extension:** `cd ~/TimeLock && git pull`, then click ↻ on TimeLock in the extensions page. The popup shows a banner when an update is out.
-- **Mac app:** right-click the hourglass → **Check for Updates…**. It updates itself.
+- **Mac app:** click the hourglass → **Check for Updates…**. It updates itself.
 - **Stream Deck plugin:** after `git pull`, run `~/TimeLock/streamdeck/install.sh`.
 - Running the one-command installer again also updates everything.
 
@@ -84,7 +84,7 @@ Common ones:
 | Code | Meaning |
 |---|---|
 | `TL-601` | The extension can't reach the Mac app. Open TimeLock from `~/Applications` once (it re-registers with your browsers), then click **Check connection** in Settings. |
-| `TL-608` | Clicking the hourglass couldn't open the popup. Make sure the browser is open and the extension is loaded. |
+| `TL-608` | **Open TimeLock in the Browser** couldn't open the popup. Make sure the browser is open and the extension is loaded. |
 | `TL-901` | The Stream Deck keys can't find the Mac app. Open TimeLock. |
 | `TL-81x` | Installer problems; each one says what to try. |
 

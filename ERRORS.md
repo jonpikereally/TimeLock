@@ -35,7 +35,7 @@ Codes are grouped: `1xx` extension updates, `2xx` time tracking, `3xx` blocking,
 | `TL-605` | **Mac app:** today's saved app time couldn't be read, so it started from zero. The unreadable file was kept with "damaged" in its name. | Nothing to do; tracking continues. If it keeps happening, copy the details and open an issue. |
 | `TL-606` | **Mac app:** turning Open at Login on or off failed. | Add or remove TimeLock yourself in System Settings → General → Login Items. |
 | `TL-607` | **Mac app:** the extension sent the Mac app something it couldn't handle, usually because one of them is out of date. | Update both to the latest version, then reload the extension. |
-| `TL-608` | **Mac app:** clicking the hourglass couldn't open the TimeLock popup: the browser extension didn't answer within 15 seconds. | Make sure the browser is open and the TimeLock extension is enabled and on 2.3.0 or newer (reload it in the extensions page), then click again. Right-click the hourglass for the menu. |
+| `TL-608` | **Mac app:** **Open TimeLock in the Browser** couldn't open the TimeLock popup: the browser extension didn't answer within 15 seconds. | Make sure the browser is open and the TimeLock extension is enabled and on 2.3.0 or newer (reload it in the extensions page), then try again. |
 | `TL-701` | **Mac app update:** no update source is set. | Use **Update Source…** in the menu, or leave it empty for the built-in source. |
 | `TL-702` | **Mac app update:** the update source isn't a web link or a file path. | Fix it in **Update Source…**, or clear it. |
 | `TL-703` | **Mac app update:** couldn't reach the update source. | Check your internet connection and try again. |

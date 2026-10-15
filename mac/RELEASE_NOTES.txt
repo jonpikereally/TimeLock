@@ -1,1 +1,1 @@
-Click the hourglass to open the TimeLock browser popup (the browser comes to the front, launching it if needed). Right-click or ⌥-click for this menu, which also has "Open TimeLock in the Browser". Needs the browser extension 2.3.0 or newer.
+Clicking the hourglass shows the menu again. "Open TimeLock in the Browser" in the menu opens the extension popup.

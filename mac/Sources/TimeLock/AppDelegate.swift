@@ -22,10 +22,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         refreshIcon()
         menu.delegate = self
         menu.autoenablesItems = false
-        // Click: open the extension's popup. Right-click or ⌥-click: this menu.
-        statusItem.button?.target = self
-        statusItem.button?.action = #selector(statusItemClicked)
-        statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        // A click shows this menu; its "Open TimeLock in the Browser" item opens
+        // the extension's popup (Jon preferred the menu on click, 2026-10-15).
+        statusItem.menu = menu
 
         tracker.onChange = { [weak self] in self?.refreshIcon() }
         tracker.start()
@@ -66,20 +65,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         alert.runModal()
     }
 
-    // MARK: - Click → extension popup
-
-    @objc private func statusItemClicked() {
-        let event = NSApp.currentEvent
-        let wantsMenu = event?.type == .rightMouseUp || event?.modifierFlags.contains(.option) == true
-            || event?.modifierFlags.contains(.control) == true
-        // Until the extension has connected once there's no popup to open.
-        if wantsMenu || Store.loadBrowser() == nil { showMenu() } else { openExtensionPopup() }
-    }
+    // MARK: - "Open TimeLock in the Browser" → extension popup
 
     private func showMenu() {
-        statusItem.menu = menu
         statusItem.button?.performClick(nil)
-        statusItem.menu = nil
     }
 
     private var popupWait: Timer?
@@ -184,10 +173,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         menu.addItem(.separator())
 
-        menu.addItem(item("Open TimeLock in the Browser", #selector(openExtensionPopup)))
-        let tip = info("Tip: click the hourglass for the browser popup, right-click for this menu")
-        menu.addItem(tip)
-        menu.addItem(.separator())
+        if Store.loadBrowser() != nil {
+            menu.addItem(item("Open TimeLock in the Browser", #selector(openExtensionPopup)))
+            menu.addItem(.separator())
+        }
         let login = item("Open at Login", #selector(toggleOpenAtLogin))
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(login)

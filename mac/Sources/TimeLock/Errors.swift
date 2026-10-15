@@ -69,7 +69,7 @@ enum ErrorCode: String, CaseIterable {
         case .connectorFailed:
             return "Update both the extension and the Mac app to the latest version, then reload the extension."
         case .popupFailed:
-            return "Check the browser is open and the TimeLock extension is enabled and up to date (2.3.0 or newer), then click again. Right-click the hourglass for the menu."
+            return "Check the browser is open and the TimeLock extension is enabled and up to date (2.3.0 or newer), then choose Open TimeLock in the Browser again."
         case .noUpdateSource, .badUpdateSource:
             return "Set one with “Update Source…” in the menu, or leave it empty to use the built-in source."
         case .updateSourceUnreachable:
