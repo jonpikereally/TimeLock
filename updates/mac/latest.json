@@ -1,1 +1,1 @@
-{"version": "2.3.0", "url": "TimeLock-Mac.zip", "notes": "Click the hourglass to open the TimeLock browser popup (the browser comes to the front, launching it if needed). Right-click or \u2325-click for this menu, which also has \"Open TimeLock in the Browser\". Needs the browser extension 2.3.0 or newer."}
+{"version": "2.3.1", "url": "TimeLock-Mac.zip", "notes": "Clicking the hourglass shows the menu again. \"Open TimeLock in the Browser\" in the menu opens the extension popup."}
