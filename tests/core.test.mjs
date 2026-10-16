@@ -89,6 +89,23 @@ assert.equal(c.validateGoal({ kind: "app", name: "Anki", min: 30, max: 10 }).err
 assert.equal(c.validateGoal({ kind: "app", name: "Anki" }).error, "TL-505", "needs a min or a max");
 assert.equal(c.validateGoal({ kind: "site", name: "nope", max: 5 }).error, "TL-504");
 
+// stats calendar (2026-10-14 is a Wednesday)
+assert.equal(c.weekStart("2026-10-14"), "2026-10-12");
+assert.equal(c.weekStart("2026-10-12"), "2026-10-12", "Monday is its own week start");
+assert.equal(c.weekStart("2026-10-18"), "2026-10-12", "Sunday belongs to the week before");
+assert.equal(c.weekStart("2026-01-01"), "2025-12-29", "weeks cross the new year");
+assert.equal(c.addDays("2026-02-28", 1), "2026-03-01");
+assert.equal(c.addDays("2026-11-01", 1), "2026-11-02", "DST change doesn't skip or repeat a day");
+assert.equal(c.daysBetween("2026-10-30", "2026-11-02").join(), "2026-10-30,2026-10-31,2026-11-01,2026-11-02");
+assert.equal(c.rangeStart("week", "2026-10-14"), "2026-10-12");
+assert.equal(c.rangeStart("month", "2026-10-14"), "2026-10-01");
+assert.equal(c.rangeStart("year", "2026-10-14"), "2026-01-01");
+assert.equal(c.rangeStart("7d", "2026-10-14"), "2026-10-08");
+assert.equal(c.rangeStart("30d", "2026-10-14"), "2026-09-15");
+assert.equal(c.rangeStart("today", "2026-10-14"), "2026-10-14");
+assert.deepEqual(c.bucket(["2026-10-11", "2026-10-12", "2026-10-13"], { "2026-10-11": 60, "2026-10-12": 30, "2026-10-13": 10 }, "week"),
+  [{ key: "2026-10-05", secs: 60 }, { key: "2026-10-12", secs: 40 }]);
+
 // misc
 assert.equal(c.fmtDuration(42), "42s");
 assert.equal(c.fmtDuration(125 * 60), "2h 05m");

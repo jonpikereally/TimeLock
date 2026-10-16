@@ -73,13 +73,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private var popupWait: Timer?
 
-    @objc private func openExtensionPopup() {
+    @objc private func openExtensionPopup() { askBrowser(page: "popup") }
+    @objc private func openExtensionStats() { askBrowser(page: "stats") }
+
+    /// Asks the extension (through the data folder) to open its popup or Stats page.
+    private func askBrowser(page: String) {
         popupWait?.invalidate()
         let fm = FileManager.default
         try? fm.removeItem(at: PopupRequest.ackFile)
         do {
             try Store.ensureFolders()
-            try Store.writeAtomically(Data("\(Date().timeIntervalSince1970)".utf8), to: PopupRequest.requestFile)
+            try Store.writeAtomically(Data("\(page) \(Date().timeIntervalSince1970)".utf8), to: PopupRequest.requestFile)
         } catch {
             return ErrorReporter.shared.report(AppError(.popupFailed, "open-popup.request — \(error.localizedDescription)"),
                                                surface: .alert, title: "Couldn't open TimeLock")
@@ -175,6 +179,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         if Store.loadBrowser() != nil {
             menu.addItem(item("Open TimeLock in the Browser", #selector(openExtensionPopup)))
+            menu.addItem(item("Stats: Week, Month, Year…", #selector(openExtensionStats)))
             menu.addItem(.separator())
         }
         let login = item("Open at Login", #selector(toggleOpenAtLogin))

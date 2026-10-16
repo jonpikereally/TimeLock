@@ -387,6 +387,7 @@ $("#reset-hour").onchange = updateSaveState;
 $("#warnings").onchange = updateSaveState;
 $("#update-source").oninput = updateSaveState;
 $("#save").onclick = save;
+$("#stats").onclick = () => { chrome.tabs.create({ url: chrome.runtime.getURL("app/stats.html") }); window.close(); };
 $("#add-goal").onclick = () => { goalsDraft.push({ kind: "site", name: "", min: null, max: null }); renderGoals(); };
 $("#save-goals").onclick = saveGoals;
 $("#check-updates").onclick = checkUpdates;

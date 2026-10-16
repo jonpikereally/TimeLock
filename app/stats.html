@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TimeLock Stats</title>
+<link rel="icon" href="../icons/icon32.png">
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="stats.css">
+</head>
+<body class="stats">
+<header>
+  <img src="../icons/icon32.png" alt="">
+  <h1>TimeLock Stats</h1>
+  <span class="muted small" id="as-of"></span>
+</header>
+<main>
+  <div id="banners"></div>
+
+  <div class="filters" role="toolbar" aria-label="Filters">
+    <div class="seg" id="range" aria-label="Range">
+      <button data-v="today">Today</button><button data-v="week">This week</button><button data-v="month">This month</button>
+      <button data-v="year">This year</button><button data-v="7d">Last 7 days</button><button data-v="30d">Last 30 days</button>
+    </div>
+    <div class="seg" id="view" aria-label="View">
+      <button data-v="totals">Totals</button><button data-v="day">Per day</button><button data-v="week">Per week</button>
+    </div>
+    <select id="source" aria-label="Show">
+      <option value="all">Websites + Mac apps</option><option value="site">Websites</option><option value="app">Mac apps</option>
+    </select>
+    <select id="item" aria-label="App or website"></select>
+  </div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section class="card chart-card" id="chart-card">
+    <div class="row chart-head"><b class="grow" id="chart-title"></b>
+      <span id="legend" class="legend"></span>
+      <button class="btn small" id="as-table" aria-pressed="false">Show as table</button></div>
+    <div id="chart" class="chart"></div>
+    <div id="chart-table" class="hidden"></div>
+    <div id="tip" class="tip hidden" role="tooltip"></div>
+  </section>
+
+  <section class="card">
+    <div class="row"><b class="grow" id="list-title"></b><a href="#" id="clear-period" class="small hidden">Show the whole range</a></div>
+    <ul class="rank" id="rank"></ul>
+  </section>
+
+  <p class="muted small foot">Times are what TimeLock counted: the browser tab in front for websites, the app in front for Mac apps (plus media playing), never while you were away. Websites keep 400 days of history; Mac apps need <a href="https://github.com/jonpikereally/TimeLock" target="_blank">TimeLock for Mac</a>.</p>
+</main>
+<script type="module" src="stats.js"></script>
+</body>
+</html>

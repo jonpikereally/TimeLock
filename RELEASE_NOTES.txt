@@ -1,1 +1,1 @@
-No changes to the extension in 2.3.1 (version kept in step with TimeLock for Mac).
+Stats: click 📊 in the popup (or choose Stats in the Mac menu) for this week, this month, this year and more, as totals or per day / per week, for websites, Mac apps or both. Pick one app or site to see its history coloured by its goal. History is now kept for 400 days.

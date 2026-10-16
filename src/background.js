@@ -6,7 +6,7 @@ const VERSION = chrome.runtime.getManifest().version;
 const FEED = `https://raw.githubusercontent.com/${REPO}/main/updates/latest.json`;
 const BLOCKED = chrome.runtime.getURL("app/blocked.html");
 const MAX_GAP = 90; // seconds; a longer gap between ticks means the computer slept
-const KEEP_DAYS = 35;
+const KEEP_DAYS = 400; // a full year for the Stats page
 const DEFAULTS = { rules: [], resetHour: 0, warnings: true, updateSource: "", clockSites: [], goals: [] };
 
 // Every state change goes through one queue, so two events firing together
@@ -104,7 +104,7 @@ function listenToMac() {
   }
   macPort.onMessage.addListener(async (msg) => {
     if (msg && msg.type === "openPopup") {
-      const how = await openPopupForMac();
+      const how = msg.page === "stats" ? await openStatsTab() : await openPopupForMac();
       macPort && macPort.postMessage({ type: "popupOpened", how });
     }
   });
@@ -115,6 +115,13 @@ function listenToMac() {
     if (!/not found|forbidden/i.test(err)) setTimeout(listenToMac, 10000);
   });
   macPort.postMessage({ type: "listen" });
+}
+
+async function openStatsTab() {
+  const win = await chrome.windows.getLastFocused({ windowTypes: ["normal"] }).catch(() => null);
+  if (win) await chrome.windows.update(win.id, { focused: true }).catch(() => {});
+  await chrome.tabs.create({ url: chrome.runtime.getURL("app/stats.html"), ...(win ? { windowId: win.id } : {}) });
+  return "stats";
 }
 
 async function openPopupForMac() {
@@ -349,6 +356,37 @@ const handlers = {
     if (!sender.tab) return;
     await chrome.storage.session.set({ [`media:${sender.tab.id}`]: !!playing });
     tick("media");
+  },
+
+  // Everything the Stats page needs for the days from `from` to `to`:
+  // website time from storage, Mac app time from the Mac app's own day files
+  // (falling back to what earlier syncs left in storage).
+  // With no from/to: this year plus the last 30 days, up to today.
+  async history({ from, to }) {
+    await serial(flush);
+    const s = await getSettings();
+    const today = core.dayKey(Date.now(), s.resetHour);
+    if (!to) to = today;
+    if (!from) from = [core.rangeStart("year", today), core.rangeStart("30d", today)].sort()[0];
+    const days = core.daysBetween(from, to);
+    const stored = await load(days.flatMap((d) => [`usage:${d}`, `apps:${d}`]));
+    const sites = {}, apps = {};
+    for (const d of days) {
+      if (stored[`usage:${d}`]) sites[d] = stored[`usage:${d}`];
+      if (stored[`apps:${d}`]) apps[d] = stored[`apps:${d}`];
+    }
+    let mac = "none";
+    try {
+      const res = await chrome.runtime.sendNativeMessage(MAC_HOST, { type: "history", days });
+      if (res && res.ok) { Object.assign(apps, res.days || {}); mac = "ok"; }
+    } catch (e) {
+      if (!/not found|forbidden/i.test(String(e && e.message))) mac = "error";
+    }
+    return { from, to, today, sites, apps, mac, goals: s.goals };
+  },
+
+  async openStats() {
+    await chrome.tabs.create({ url: chrome.runtime.getURL("app/stats.html") });
   },
 
   async macRefresh() {

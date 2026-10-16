@@ -63,7 +63,7 @@ enum Store {
     static let browserFile = folder.appendingPathComponent("browser.json")
     /// Live status for other readers (Stream Deck plugin); see Tracker.writeStatus.
     static let statusFile = folder.appendingPathComponent("status.json")
-    static let keepDays = 35
+    static let keepDays = 400 // a full year for the extension's Stats page
 
     static func ensureFolders() throws {
         do {

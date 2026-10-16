@@ -1,1 +1,1 @@
-Clicking the hourglass shows the menu again. "Open TimeLock in the Browser" in the menu opens the extension popup.
+New "Stats: Week, Month, Year…" menu item opens the TimeLock Stats page in your browser. App history is now kept for 400 days (was 35) so the Stats page can show this year.

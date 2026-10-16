@@ -10,6 +10,47 @@ export function dayKey(now, resetHour = 0) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+// ---------- calendar helpers for the Stats page (day keys are "YYYY-MM-DD") ----------
+const keyToDate = (k) => { const [y, m, d] = k.split("-").map(Number); return new Date(y, m - 1, d, 12); };
+const dateToKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+export function addDays(key, n) { const d = keyToDate(key); d.setDate(d.getDate() + n); return dateToKey(d); }
+
+// Weeks start on Monday.
+export function weekStart(key) {
+  const d = keyToDate(key);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return dateToKey(d);
+}
+
+// Every day key from `from` to `to`, inclusive.
+export function daysBetween(from, to) {
+  const out = [];
+  for (let k = from; k <= to && out.length < 4000; k = addDays(k, 1)) out.push(k);
+  return out;
+}
+
+// The first day of a named range ending today.
+export function rangeStart(range, today) {
+  switch (range) {
+    case "week": return weekStart(today);
+    case "month": return today.slice(0, 8) + "01";
+    case "year": return today.slice(0, 5) + "01-01";
+    case "7d": return addDays(today, -6);
+    case "30d": return addDays(today, -29);
+    default: return today;
+  }
+}
+
+// Groups day totals into periods: "day" keeps each day, "week" sums Mon–Sun.
+export function bucket(days, totals, by) {
+  const out = new Map();
+  for (const d of days) {
+    const k = by === "week" ? weekStart(d) : d;
+    out.set(k, (out.get(k) || 0) + (totals[d] || 0));
+  }
+  return [...out].map(([key, secs]) => ({ key, secs }));
+}
+
 // When today's limits reset (the next time the clock hits resetHour:00).
 export function nextReset(now, resetHour = 0) {
   const d = new Date(now);

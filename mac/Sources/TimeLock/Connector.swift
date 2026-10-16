@@ -36,8 +36,19 @@ enum Connector {
                 // The extension keeps this connection open so the menu bar
                 // app can ask it to open its popup (see PopupRequest).
                 PopupRequest.rememberBrowser()
-                PopupRequest.startWatching { send(["type": "openPopup"]) }
+                PopupRequest.startWatching { page in send(["type": "openPopup", "page": page]) }
                 return ["ok": true, "type": "listening", "version": AppVersion.version]
+            case "history":
+                // App time per day for the extension's Stats page.
+                let days = (msg["days"] as? [String] ?? []).prefix(800)
+                var out: [String: [String: Double]] = [:]
+                // Only plain YYYY-MM-DD names, so a day can never point outside apps/.
+                for day in days where day.range(of: #"^\d{4}-\d{2}-\d{2}$"#, options: .regularExpression) != nil {
+                    if let apps = try? Store.loadApps(day, repair: false), !apps.isEmpty {
+                        out[day] = apps.mapValues { ($0 * 10).rounded() / 10 }
+                    }
+                }
+                return ["ok": true, "days": out]
             case "popupOpened":
                 PopupRequest.acknowledge(msg["how"] as? String ?? "popup")
                 return ["ok": true, "type": "ack"]
@@ -116,7 +127,8 @@ enum PopupRequest {
 
     /// Connector side: poll for a request every 0.25 s and claim it by renaming,
     /// so two browsers both listening can't both open a popup.
-    static func startWatching(_ fire: @escaping () -> Void) {
+    /// `fire` gets the page asked for: "popup" or "stats".
+    static func startWatching(_ fire: @escaping (String) -> Void) {
         guard timer == nil else { return }
         let t = DispatchSource.makeTimerSource(queue: .global(qos: .userInitiated))
         t.schedule(deadline: .now(), repeating: .milliseconds(250))
@@ -125,8 +137,9 @@ enum PopupRequest {
             guard rename(requestFile.path, claimed.path) == 0 else { return }
             let age = ((try? FileManager.default.attributesOfItem(atPath: claimed.path))?[.modificationDate] as? Date)
                 .map { Date().timeIntervalSince($0) } ?? 0
+            let page = (try? String(contentsOf: claimed, encoding: .utf8))?.hasPrefix("stats") == true ? "stats" : "popup"
             try? FileManager.default.removeItem(at: claimed)
-            if age < freshFor { fire() }
+            if age < freshFor { fire(page) }
         }
         t.resume()
         timer = t

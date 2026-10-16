@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- Opens the real Stats page with a fake chrome.* API and ~5 months of made-up history.
+     Serve the repo root and open /tests/stats-harness.html (add ?nomac for websites only). -->
+<html><head><meta charset="utf-8"><title>TimeLock Stats harness</title>
+<style>html,body{margin:0;height:100%}iframe{border:0;width:100%;height:100%}</style></head>
+<body><iframe id="f"></iframe>
+<script type="module">
+import * as core from "/src/shared/core.js";
+const q = new URLSearchParams(location.search);
+const today = core.dayKey(Date.now());
+const from = [core.rangeStart("year", today), core.rangeStart("30d", today)].sort()[0];
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const sites = {}, apps = {};
+for (const d of core.daysBetween(core.addDays(today, -150), today)) {
+  const weekend = [0, 6].includes(new Date(d + "T12:00").getDay());
+  sites[d] = { "youtube.com": rnd() * (weekend ? 7200 : 3600), "github.com": weekend ? rnd() * 600 : 1800 + rnd() * 5400,
+    "reddit.com": rnd() * 2400, "old.reddit.com": rnd() * 600, "mail.google.com": 300 + rnd() * 1200 };
+  if (!q.has("nomac")) apps[d] = { "Logic Pro": weekend ? 3600 + rnd() * 7200 : rnd() * 3600, "Visual Studio Code": weekend ? 0 : 3600 + rnd() * 10800,
+    "Brave Browser": 3000 + rnd() * 6000, Discord: rnd() * 1800, Messages: rnd() * 900 };
+}
+const goals = [{ kind: "app", name: "Logic Pro", min: 60, max: null }, { kind: "site", name: "youtube.com", min: null, max: 60 }, { kind: "site", name: "reddit.com", min: null, max: 20 }];
+window.chromeMock = {
+  runtime: { getManifest: () => ({ version: "2.4.0" }), getURL: (p) => "/" + p,
+    sendMessage: async (m) => m.type === "history" ? { ok: true, result: { from, to: today, today, sites, apps, mac: q.has("nomac") ? "none" : "ok", goals } } : { ok: true } },
+  tabs: { create: () => {} },
+};
+const f = document.getElementById("f");
+const html = await (await fetch("/app/stats.html")).text();
+f.contentWindow.chrome = window.chromeMock;
+f.contentWindow.localStorage.removeItem("timelock-stats");
+const doc = f.contentDocument; doc.open(); doc.write(html.replace("<head>", '<head><base href="/app/">')); doc.close();
+</script></body></html>
