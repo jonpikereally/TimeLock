@@ -1,1 +1,1 @@
-{"version": "2.3.1", "url": "TimeLock-Mac.zip", "notes": "Clicking the hourglass shows the menu again. \"Open TimeLock in the Browser\" in the menu opens the extension popup."}
+{"version": "2.4.0", "url": "TimeLock-Mac.zip", "notes": "New \"Stats: Week, Month, Year\u2026\" menu item opens the TimeLock Stats page in your browser. App history is now kept for 400 days (was 35) so the Stats page can show this year."}
