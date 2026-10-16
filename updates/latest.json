@@ -1,5 +1,5 @@
 {
-  "version": "2.3.1",
+  "version": "2.4.0",
   "url": "TimeLock.zip",
-  "notes": "No changes to the extension in 2.3.1 (version kept in step with TimeLock for Mac)."
+  "notes": "Stats: click \ud83d\udcca in the popup (or choose Stats in the Mac menu) for this week, this month, this year and more, as totals or per day / per week, for websites, Mac apps or both. Pick one app or site to see its history coloured by its goal. History is now kept for 400 days."
 }
